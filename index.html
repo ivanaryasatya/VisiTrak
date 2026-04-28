@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Industrial Automation Dashboard</title>
+    <link rel="stylesheet" href="styles.css">
+    <!-- Menggunakan Chart.js untuk kebutuhan grafik -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- FontAwesome untuk ikon -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <div class="dashboard-container">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="logo">
+                <i class="fas fa-industry"></i>
+                <h2>AutoMon</h2>
+            </div>
+            <ul class="nav-links">
+                <li class="active"><i class="fas fa-chart-line"></i> Dashboard</li>
+                <li><i class="fas fa-cogs"></i> Mesin</li>
+                <li><i class="fas fa-bolt"></i> Energi</li>
+                <li><i class="fas fa-robot"></i> AI Settings</li>
+            </ul>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Header -->
+            <header>
+                <h1>Monitoring Otomatisasi Mesin</h1>
+                <div class="ai-status healthy">
+                    <i class="fas fa-brain"></i> AI Auto Detect: Normal (Tidak ada anomali)
+                </div>
+            </header>
+
+            <!-- Top Indicators -->
+            <section class="indicators">
+                <div class="card">
+                    <h3>Suhu Rata-rata</h3>
+                    <p class="value">75°C <i class="fas fa-thermometer-half warning-text"></i></p>
+                </div>
+                <div class="card">
+                    <h3>Output Shift Ini</h3>
+                    <p class="value">1,240 Unit</p>
+                </div>
+                <div class="card">
+                    <h3>Total Downtime</h3>
+                    <p class="value">12 Menit <i class="fas fa-arrow-down success-text"></i></p>
+                </div>
+                <div class="card">
+                    <h3>Efisiensi OEE</h3>
+                    <p class="value">92%</p>
+                </div>
+            </section>
+
+            <!-- Middle Section: Chart & Control Panel -->
+            <section class="middle-section">
+                <div class="chart-container card">
+                    <h3>Grafik Output vs Energi</h3>
+                    <canvas id="monitoringChart"></canvas>
+                </div>
+                
+                <div class="control-panel card">
+                    <h3><i class="fas fa-sliders-h"></i> Controllable Panel</h3>
+                    <div class="control-item">
+                        <span>Mesin CNC Alpha</span>
+                        <button class="btn btn-start" onclick="toggleMachine('cnc-alpha')">START</button>
+                    </div>
+                    <div class="control-item">
+                        <span>Conveyor Line A</span>
+                        <button class="btn btn-stop" onclick="toggleMachine('conveyor-a')">STOP</button>
+                    </div>
+                    <div class="control-item">
+                        <span>Cooling System</span>
+                        <button class="btn btn-auto" onclick="toggleMachine('cooling')">AUTO</button>
+                    </div>
+                    <hr>
+                    <button class="btn btn-emergency">EMERGENCY STOP ALL</button>
+                </div>
+            </section>
+
+            <!-- Data Table -->
+            <section class="data-table-section card">
+                <h3>Log Data Monitoring Real-time</h3>
+                <div class="table-responsive">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Tanggal</th>
+                                <th>Mesin</th>
+                                <th>Line</th>
+                                <th>Shift</th>
+                                <th>Output Unit</th>
+                                <th>Downtime Menit</th>
+                                <th>Energi kWh</th>
+                                <th>Suhu Mesin</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>2023-10-25 14:00</td>
+                                <td>CNC Alpha</td>
+                                <td>Line 1</td>
+                                <td>Siang</td>
+                                <td>350</td>
+                                <td>0</td>
+                                <td>45.2</td>
+                                <td>72°C</td>
+                                <td><span class="badge badge-success">Running</span></td>
+                            </tr>
+                            <tr>
+                                <td>2023-10-25 14:00</td>
+                                <td>Milling Beta</td>
+                                <td>Line 1</td>
+                                <td>Siang</td>
+                                <td>210</td>
+                                <td>15</td>
+                                <td>30.1</td>
+                                <td>85°C</td>
+                                <td><span class="badge badge-warning">Warning</span></td>
+                            </tr>
+                            <tr>
+                                <td>2023-10-25 14:00</td>
+                                <td>Conveyor A</td>
+                                <td>Line 2</td>
+                                <td>Siang</td>
+                                <td>0</td>
+                                <td>45</td>
+                                <td>5.0</td>
+                                <td>30°C</td>
+                                <td><span class="badge badge-danger">Stopped</span></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- AI Chatbot Floating Widget -->
+    <div class="chatbot-widget">
+        <div class="chatbot-header" onclick="toggleChat()">
+            <i class="fas fa-robot"></i> Azure AI Assistant
+            <i class="fas fa-chevron-up" id="chat-toggle-icon"></i>
+        </div>
+        <div class="chatbot-body" id="chat-body">
+            <div class="chat-messages" id="chat-messages">
+                <div class="message ai-message">
+                    Halo! Saya asisten AI Anda. Saat ini saya berjalan dalam mode UI dasar. Integrasi Azure AI akan segera hadir. Ada yang bisa dibantu terkait status mesin?
+                </div>
+            </div>
+            <div class="chat-input-area">
+                <input type="text" id="chat-input" placeholder="Tanyakan anomali mesin...">
+                <button onclick="sendMessage()"><i class="fas fa-paper-plane"></i></button>
+            </div>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
