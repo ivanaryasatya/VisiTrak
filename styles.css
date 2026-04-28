@@ -33,6 +33,7 @@ body {
     background-color: var(--sidebar-bg);
     color: white;
     padding: 20px 0;
+    overflow-y: auto;
 }
 
 .logo {
@@ -432,4 +433,66 @@ th {
     0% { transform: scale(0.98); opacity: 0.8; }
     50% { transform: scale(1.02); opacity: 1; }
     100% { transform: scale(0.98); opacity: 0.8; }
+}
+
+/* --- Responsive Mobile & Sidebar Toggle --- */
+#sidebar-toggle {
+    display: none;
+}
+
+#sidebar-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 99;
+}
+
+@media (max-width: 768px) {
+    #sidebar-toggle {
+        display: block;
+    }
+
+    .sidebar {
+        position: fixed;
+        left: -250px; /* Sembunyikan ke kiri */
+        top: 0;
+        height: 100vh;
+        z-index: 100;
+        transition: left 0.3s ease;
+    }
+
+    .sidebar.active {
+        left: 0; /* Tampilkan saat class active muncul */
+    }
+
+    #sidebar-overlay.active {
+        display: block;
+    }
+
+    header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 15px;
+    }
+
+    #page-title { font-size: 1.3rem; }
+    .ai-status { font-size: 0.85rem; }
+    
+    .main-content { padding: 15px; }
+
+    /* Tumpuk semua Grid (Columns menjadi 1 Baris) */
+    .middle-section, 
+    .middle-section[style*="grid-template-columns"],
+    #view-ai > div,
+    #view-pengaturan > div {
+        grid-template-columns: 1fr !important;
+    }
+
+    .chatbot-widget {
+        width: calc(100% - 40px); /* Paskan pada layar HP */
+    }
 }

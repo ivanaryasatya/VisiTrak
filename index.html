@@ -15,7 +15,8 @@
 <body>
     <div class="dashboard-container">
         <!-- Sidebar -->
-        <aside class="sidebar">
+        <div id="sidebar-overlay" onclick="toggleSidebar()"></div>
+        <aside class="sidebar" id="sidebar">
             <div class="logo">
                 <i class="fas fa-industry"></i>
                 <h2>VisiTrak</h2>
@@ -37,9 +38,12 @@
         <main class="main-content">
             <!-- Header -->
             <header>
-                <h1 id="page-title">Monitoring Otomatisasi Mesin</h1>
+                <div style="display: flex; align-items: center; gap: 15px;">
+                    <button id="sidebar-toggle" class="btn" style="background: var(--primary); padding: 10px 15px;" onclick="toggleSidebar()"><i class="fas fa-bars"></i></button>
+                    <h1 id="page-title">Monitoring Otomatisasi Mesin</h1>
+                </div>
                 <div class="ai-status healthy">
-                    <i class="fas fa-brain"></i> AI Auto Detect: Normal (Tidak ada anomali)
+                    <i class="fas fa-brain"></i> <span class="ai-text">AI Auto Detect: Normal (Tidak ada anomali)</span>
                 </div>
             </header>
 

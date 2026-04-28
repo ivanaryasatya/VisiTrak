@@ -13,6 +13,14 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 });
 
+// --- Logika Toggle Sidebar (Mobile) ---
+function toggleSidebar() {
+    const sidebar = document.getElementById('sidebar');
+    const overlay = document.getElementById('sidebar-overlay');
+    sidebar.classList.toggle('active');
+    overlay.classList.toggle('active');
+}
+
 // --- Logika Sidebar Navigation ---
 function switchSidebarView(evt, viewId) {
     // Sembunyikan semua view konten
@@ -42,6 +50,12 @@ function switchSidebarView(evt, viewId) {
     else if (viewId === 'view-alarm') pageTitle.innerText = "Log Alarm & Notifikasi";
     else if (viewId === 'view-pengaturan') pageTitle.innerText = "Pengaturan Sistem";
     else if (viewId === 'view-qc') pageTitle.innerText = "Visual Quality Control (AI)";
+    
+    // Tutup otomatis sidebar di mobile setelah mengklik menu
+    if (window.innerWidth <= 768) {
+        document.getElementById('sidebar').classList.remove('active');
+        document.getElementById('sidebar-overlay').classList.remove('active');
+    }
 }
 
 // --- Logika Sistem Tab ---
