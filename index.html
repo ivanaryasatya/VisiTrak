@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Industrial Automation Dashboard</title>
+    <title>VisiTrak - Advanced Industrial Monitoring</title>
     <link rel="stylesheet" href="styles.css">
     <!-- Menggunakan Chart.js untuk kebutuhan grafik -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -16,7 +16,7 @@
         <aside class="sidebar">
             <div class="logo">
                 <i class="fas fa-industry"></i>
-                <h2>AutoMon</h2>
+                <h2>VisiTrak</h2>
             </div>
             <ul class="nav-links">
                 <li class="active"><i class="fas fa-chart-line"></i> Dashboard</li>
@@ -36,108 +36,182 @@
                 </div>
             </header>
 
-            <!-- Top Indicators -->
-            <section class="indicators">
-                <div class="card">
-                    <h3>Suhu Rata-rata</h3>
-                    <p class="value">75°C <i class="fas fa-thermometer-half warning-text"></i></p>
-                </div>
-                <div class="card">
-                    <h3>Output Shift Ini</h3>
-                    <p class="value">1,240 Unit</p>
-                </div>
-                <div class="card">
-                    <h3>Total Downtime</h3>
-                    <p class="value">12 Menit <i class="fas fa-arrow-down success-text"></i></p>
-                </div>
-                <div class="card">
-                    <h3>Efisiensi OEE</h3>
-                    <p class="value">92%</p>
-                </div>
-            </section>
+            <!-- Tab Navigation -->
+            <div class="tabs">
+                <button class="tab-btn active" onclick="openTab(event, 'overview')"><i class="fas fa-home"></i> Overview</button>
+                <button class="tab-btn" onclick="openTab(event, 'diagnostics')"><i class="fas fa-microchip"></i> Live Diagnostics</button>
+                <button class="tab-btn" onclick="openTab(event, 'predictive')"><i class="fas fa-chart-pie"></i> Predictive AI</button>
+            </div>
 
-            <!-- Middle Section: Chart & Control Panel -->
-            <section class="middle-section">
-                <div class="chart-container card">
-                    <h3>Grafik Output vs Energi</h3>
-                    <canvas id="monitoringChart"></canvas>
-                </div>
-                
-                <div class="control-panel card">
-                    <h3><i class="fas fa-sliders-h"></i> Controllable Panel</h3>
-                    <div class="control-item">
-                        <span>Mesin CNC Alpha</span>
-                        <button class="btn btn-start" onclick="toggleMachine('cnc-alpha')">START</button>
+            <!-- Tab Content: Overview -->
+            <div id="overview" class="tab-content active">
+                <!-- Top Indicators -->
+                <section class="indicators">
+                    <div class="card">
+                        <h3>Suhu Rata-rata</h3>
+                        <p class="value">75°C <i class="fas fa-thermometer-half warning-text"></i></p>
                     </div>
-                    <div class="control-item">
-                        <span>Conveyor Line A</span>
-                        <button class="btn btn-stop" onclick="toggleMachine('conveyor-a')">STOP</button>
+                    <div class="card">
+                        <h3>Output Shift Ini</h3>
+                        <p class="value">1,240 Unit</p>
                     </div>
-                    <div class="control-item">
-                        <span>Cooling System</span>
-                        <button class="btn btn-auto" onclick="toggleMachine('cooling')">AUTO</button>
+                    <div class="card">
+                        <h3>Total Downtime</h3>
+                        <p class="value">12 Menit <i class="fas fa-arrow-down success-text"></i></p>
                     </div>
-                    <hr>
-                    <button class="btn btn-emergency">EMERGENCY STOP ALL</button>
-                </div>
-            </section>
+                    <div class="card">
+                        <h3>Efisiensi OEE</h3>
+                        <p class="value">92%</p>
+                    </div>
+                </section>
 
-            <!-- Data Table -->
-            <section class="data-table-section card">
-                <h3>Log Data Monitoring Real-time</h3>
-                <div class="table-responsive">
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Tanggal</th>
-                                <th>Mesin</th>
-                                <th>Line</th>
-                                <th>Shift</th>
-                                <th>Output Unit</th>
-                                <th>Downtime Menit</th>
-                                <th>Energi kWh</th>
-                                <th>Suhu Mesin</th>
-                                <th>Status</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr>
-                                <td>2023-10-25 14:00</td>
-                                <td>CNC Alpha</td>
-                                <td>Line 1</td>
-                                <td>Siang</td>
-                                <td>350</td>
-                                <td>0</td>
-                                <td>45.2</td>
-                                <td>72°C</td>
-                                <td><span class="badge badge-success">Running</span></td>
-                            </tr>
-                            <tr>
-                                <td>2023-10-25 14:00</td>
-                                <td>Milling Beta</td>
-                                <td>Line 1</td>
-                                <td>Siang</td>
-                                <td>210</td>
-                                <td>15</td>
-                                <td>30.1</td>
-                                <td>85°C</td>
-                                <td><span class="badge badge-warning">Warning</span></td>
-                            </tr>
-                            <tr>
-                                <td>2023-10-25 14:00</td>
-                                <td>Conveyor A</td>
-                                <td>Line 2</td>
-                                <td>Siang</td>
-                                <td>0</td>
-                                <td>45</td>
-                                <td>5.0</td>
-                                <td>30°C</td>
-                                <td><span class="badge badge-danger">Stopped</span></td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </section>
+                <!-- Middle Section: Chart & Control Panel -->
+                <section class="middle-section">
+                    <div class="chart-container card">
+                        <h3>Grafik Output vs Energi</h3>
+                        <canvas id="monitoringChart"></canvas>
+                    </div>
+                    
+                    <div class="control-panel card">
+                        <h3><i class="fas fa-sliders-h"></i> Controllable Panel</h3>
+                        <div class="control-item">
+                            <span>Mesin CNC Alpha</span>
+                            <button class="btn btn-start" onclick="toggleMachine('cnc-alpha')">START</button>
+                        </div>
+                        <div class="control-item">
+                            <span>Conveyor Line A</span>
+                            <button class="btn btn-stop" onclick="toggleMachine('conveyor-a')">STOP</button>
+                        </div>
+                        <div class="control-item">
+                            <span>Cooling System</span>
+                            <button class="btn btn-auto" onclick="toggleMachine('cooling')">AUTO</button>
+                        </div>
+                        <hr>
+                        <button class="btn btn-emergency">EMERGENCY STOP ALL</button>
+                    </div>
+                </section>
+
+                <!-- Data Table -->
+                <section class="data-table-section card">
+                    <h3>Log Data Monitoring Real-time</h3>
+                    <div class="table-responsive">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Tanggal</th>
+                                    <th>Mesin</th>
+                                    <th>Line</th>
+                                    <th>Shift</th>
+                                    <th>Output Unit</th>
+                                    <th>Downtime Menit</th>
+                                    <th>Energi kWh</th>
+                                    <th>Suhu Mesin</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>2023-10-25 14:00</td>
+                                    <td>CNC Alpha</td>
+                                    <td>Line 1</td>
+                                    <td>Siang</td>
+                                    <td>350</td>
+                                    <td>0</td>
+                                    <td>45.2</td>
+                                    <td>72°C</td>
+                                    <td><span class="badge badge-success">Running</span></td>
+                                </tr>
+                                <tr>
+                                    <td>2023-10-25 14:00</td>
+                                    <td>Milling Beta</td>
+                                    <td>Line 1</td>
+                                    <td>Siang</td>
+                                    <td>210</td>
+                                    <td>15</td>
+                                    <td>30.1</td>
+                                    <td>85°C</td>
+                                    <td><span class="badge badge-warning">Warning</span></td>
+                                </tr>
+                                <tr>
+                                    <td>2023-10-25 14:00</td>
+                                    <td>Conveyor A</td>
+                                    <td>Line 2</td>
+                                    <td>Siang</td>
+                                    <td>0</td>
+                                    <td>45</td>
+                                    <td>5.0</td>
+                                    <td>30°C</td>
+                                    <td><span class="badge badge-danger">Stopped</span></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+            </div>
+
+            <!-- Tab Content: Live Diagnostics -->
+            <div id="diagnostics" class="tab-content">
+                <section class="card">
+                    <h3>Advanced Sensor Telemetry (CNC Alpha)</h3>
+                    <div class="sensor-grid">
+                        <div class="card sensor-card">
+                            <h4><i class="fas fa-water"></i> Tekanan Hidrolik (Psi)</h4>
+                            <p class="value">2,450 <span class="text-small">/ 3000</span></p>
+                            <div class="sensor-bar"><div class="sensor-fill" style="width: 80%;"></div></div>
+                        </div>
+                        <div class="card sensor-card">
+                            <h4><i class="fas fa-wave-square"></i> Vibrasi Spindle (mm/s)</h4>
+                            <p class="value">7.2 <span class="warning-text text-small">Tinggi</span></p>
+                            <div class="sensor-bar"><div class="sensor-fill warning" style="width: 72%;"></div></div>
+                        </div>
+                        <div class="card sensor-card">
+                            <h4><i class="fas fa-fan"></i> Motor RPM</h4>
+                            <p class="value">12,000</p>
+                            <div class="sensor-bar"><div class="sensor-fill" style="width: 90%;"></div></div>
+                        </div>
+                        <div class="card sensor-card">
+                            <h4><i class="fas fa-oil-can"></i> Kualitas Pelumas (%)</h4>
+                            <p class="value">45%</p>
+                            <div class="sensor-bar"><div class="sensor-fill warning" style="width: 45%;"></div></div>
+                        </div>
+                    </div>
+                </section>
+            </div>
+
+            <!-- Tab Content: Predictive AI -->
+            <div id="predictive" class="tab-content">
+                <section class="card">
+                    <h3><i class="fas fa-chart-pie"></i> VisiTrak AI: Prediksi Perawatan Mesin</h3>
+                    <p style="margin: 15px 0;">Sistem AI VisiTrak mendeteksi adanya pola anomali dan potensi kegagalan komponen dalam waktu dekat berdasarkan data historis dan getaran.</p>
+                    <div class="table-responsive">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Komponen Berisiko</th>
+                                    <th>Mesin Terkait</th>
+                                    <th>Estimasi Kegagalan</th>
+                                    <th>Tindakan Sistem (Otomatis) / Rekomendasi</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>Main Bearing</td>
+                                    <td>CNC Alpha</td>
+                                    <td><span class="danger-text" style="font-weight: bold;">3 Hari</span></td>
+                                    <td>Alert teknisi via SMS & Jadwalkan pergantian saat shift malam</td>
+                                </tr>
+                                <tr>
+                                    <td>Sabuk Konveyor Line A</td>
+                                    <td>Conveyor A</td>
+                                    <td><span class="warning-text" style="font-weight: bold;">14 Hari</span></td>
+                                    <td>Sesuaikan tensi sabuk (Menunggu approval di control panel)</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+            </div>
+
         </main>
     </div>
 

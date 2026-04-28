@@ -9,6 +9,25 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 });
 
+// --- Logika Sistem Tab ---
+function openTab(evt, tabId) {
+    // Sembunyikan semua konten tab
+    const tabContents = document.getElementsByClassName("tab-content");
+    for (let i = 0; i < tabContents.length; i++) {
+        tabContents[i].classList.remove("active");
+    }
+
+    // Hapus class 'active' dari semua tombol tab
+    const tabBtns = document.getElementsByClassName("tab-btn");
+    for (let i = 0; i < tabBtns.length; i++) {
+        tabBtns[i].classList.remove("active");
+    }
+
+    // Tampilkan tab yang dipilih
+    document.getElementById(tabId).classList.add("active");
+    evt.currentTarget.classList.add("active");
+}
+
 // --- Inisialisasi Grafik (Chart.js) ---
 function initChart() {
     const ctx = document.getElementById('monitoringChart').getContext('2d');
