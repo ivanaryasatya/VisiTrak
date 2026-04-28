@@ -25,6 +25,11 @@
                 <li onclick="switchSidebarView(event, 'view-mesin')"><i class="fas fa-cogs"></i> Mesin</li>
                 <li onclick="switchSidebarView(event, 'view-energi')"><i class="fas fa-bolt"></i> Energi</li>
                 <li onclick="switchSidebarView(event, 'view-ai')"><i class="fas fa-robot"></i> AI Settings</li>
+                <li onclick="switchSidebarView(event, 'view-laporan')"><i class="fas fa-file-alt"></i> Laporan</li>
+                <li onclick="switchSidebarView(event, 'view-pemeliharaan')"><i class="fas fa-tools"></i> Pemeliharaan</li>
+                <li onclick="switchSidebarView(event, 'view-alarm')"><i class="fas fa-bell"></i> Log Alarm</li>
+                <li onclick="switchSidebarView(event, 'view-pengaturan')"><i class="fas fa-cog"></i> Pengaturan</li>
+                <li onclick="switchSidebarView(event, 'view-qc')"><i class="fas fa-camera"></i> Visual QC</li>
             </ul>
         </aside>
 
@@ -92,6 +97,20 @@
                         </div>
                         <hr>
                         <button class="btn btn-emergency">EMERGENCY STOP ALL</button>
+                    </div>
+                </section>
+
+                <!-- AI Process Optimizer -->
+                <section class="card" style="margin-bottom: 30px; border-left: 4px solid var(--primary);">
+                    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px;">
+                        <div>
+                            <h3 style="color: var(--primary);"><i class="fas fa-magic"></i> Rekomendasi AI Optimizer</h3>
+                            <p style="margin-top: 5px; color: var(--text-main);"><strong>Saran:</strong> Turunkan kecepatan CNC Alpha sebesar 3% dan naikkan kecepatan Conveyor A sebesar 5% untuk menghemat 7% energi harian tanpa mengurangi total output.</p>
+                        </div>
+                        <div style="display: flex; gap: 10px;">
+                            <button class="btn btn-start" onclick="applyOptimization(this)"><i class="fas fa-check"></i> Terapkan</button>
+                            <button class="btn" style="background-color: #cbd5e1; color: var(--text-main);" onclick="this.parentElement.parentElement.parentElement.style.display='none'">Abaikan</button>
+                        </div>
                     </div>
                 </section>
 
@@ -219,26 +238,331 @@
 
             <!-- Sidebar Content: Mesin -->
             <div id="view-mesin" class="sidebar-view">
-                <section class="card">
-                    <h3><i class="fas fa-cogs"></i> Manajemen Mesin</h3>
-                    <p style="margin-top: 15px;">Halaman ini berisi daftar seluruh mesin yang terhubung, status maintenance, dan konfigurasi parameter operasional masing-masing mesin.</p>
-                </section>
+                <div class="view-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                    <h2><i class="fas fa-network-wired"></i> Daftar Mesin Terhubung</h2>
+                    <span class="badge badge-success" style="font-size: 0.9em;"><i class="fas fa-sync fa-spin"></i> Live Telemetry Active</span>
+                </div>
+                
+                <div class="machine-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 20px;">
+                    <!-- Machine 1 -->
+                    <div class="card machine-detail-card" style="border-top: 4px solid #10b981;">
+                        <div style="display: flex; justify-content: space-between; border-bottom: 1px solid #eee; padding-bottom: 10px; margin-bottom: 15px;">
+                            <h3><i class="fas fa-microchip"></i> CNC Alpha</h3>
+                            <span class="badge badge-success">Running</span>
+                        </div>
+                        <div class="machine-stats" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px;">
+                            <div><small>Suhu Spindle</small><br><span id="cnc-temp" style="font-size: 1.2em; font-weight: bold;">72.4</span> °C</div>
+                            <div><small>Vibrasi</small><br><span id="cnc-vib" style="font-size: 1.2em; font-weight: bold;">2.10</span> mm/s</div>
+                            <div><small>Kecepatan</small><br><span id="cnc-rpm" style="font-size: 1.2em; font-weight: bold;">12050</span> RPM</div>
+                            <div><small>OEE Live</small><br><span style="font-size: 1.2em; font-weight: bold; color: #10b981;">94.2%</span></div>
+                        </div>
+                        <div class="machine-controls" style="background: #f8fafc; padding: 10px; border-radius: 6px;">
+                            <label for="cnc-speed" style="display: block; font-size: 0.9em; margin-bottom: 5px;">Override Kecepatan: <strong id="cnc-speed-val">12000</strong> RPM</label>
+                            <input type="range" id="cnc-speed" min="0" max="15000" value="12000" oninput="updateMachineParam('cnc-speed')" style="width: 100%;">
+                        </div>
+                        <div style="margin-top: 15px; display: flex; gap: 10px;">
+                            <button class="btn btn-auto" style="flex: 1; padding: 8px;" onclick="autoTune('CNC Alpha')"><i class="fas fa-magic"></i> AI Tune</button>
+                            <button class="btn btn-emergency" style="flex: 1; padding: 8px;" onclick="toggleMachine('cnc-alpha')"><i class="fas fa-power-off"></i> E-STOP</button>
+                        </div>
+                    </div>
+
+                    <!-- Machine 2 -->
+                    <div class="card machine-detail-card" style="border-top: 4px solid #f59e0b;">
+                        <div style="display: flex; justify-content: space-between; border-bottom: 1px solid #eee; padding-bottom: 10px; margin-bottom: 15px;">
+                            <h3><i class="fas fa-cog"></i> Milling Beta</h3>
+                            <span class="badge badge-warning">Warning - Overheat</span>
+                        </div>
+                        <div class="machine-stats" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px;">
+                            <div><small>Suhu Spindle</small><br><span id="mill-temp" class="warning-text" style="font-size: 1.2em; font-weight: bold;">88.1</span> °C</div>
+                            <div><small>Vibrasi</small><br><span id="mill-vib" style="font-size: 1.2em; font-weight: bold;">5.40</span> mm/s</div>
+                            <div><small>Kecepatan</small><br><span id="mill-rpm" style="font-size: 1.2em; font-weight: bold;">8400</span> RPM</div>
+                            <div><small>Tekanan Coolant</small><br><span id="mill-coolant-pres" style="font-size: 1.2em; font-weight: bold;">1.2</span> Bar</div>
+                        </div>
+                        <div class="machine-controls" style="background: #f8fafc; padding: 10px; border-radius: 6px;">
+                            <label for="mill-coolant" style="display: block; font-size: 0.9em; margin-bottom: 5px;">Pompa Coolant Utama: <strong id="mill-coolant-val">60</strong>%</label>
+                            <input type="range" id="mill-coolant" min="0" max="100" value="60" oninput="updateMachineParam('mill-coolant')" style="width: 100%;">
+                        </div>
+                        <div style="margin-top: 15px; display: flex; gap: 10px;">
+                            <button class="btn btn-warning" style="flex: 1; padding: 8px;" onclick="calibrateMachine('Milling Beta')"><i class="fas fa-tools"></i> Purge Coolant</button>
+                            <button class="btn btn-emergency" style="flex: 1; padding: 8px;" onclick="toggleMachine('milling-beta')"><i class="fas fa-power-off"></i> E-STOP</button>
+                        </div>
+                    </div>
+                </div>
             </div>
 
             <!-- Sidebar Content: Energi -->
             <div id="view-energi" class="sidebar-view">
-                <section class="card">
-                    <h3><i class="fas fa-bolt"></i> Monitoring Energi</h3>
-                    <p style="margin-top: 15px;">Halaman ini menampilkan rincian konsumsi daya listrik per line produksi, estimasi biaya, serta rekomendasi efisiensi energi.</p>
-                </section>
+                <div class="view-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                    <h2><i class="fas fa-bolt"></i> Monitoring Energi Terpusat</h2>
+                    <span class="badge badge-warning" style="font-size: 0.9em;"><i class="fas fa-exclamation-triangle"></i> Peak Load Warning</span>
+                </div>
+
+                <div class="indicators" style="margin-bottom: 20px;">
+                    <div class="card">
+                        <h3>Konsumsi Saat Ini</h3>
+                        <p class="value"><span id="current-power">452</span> kW</p>
+                    </div>
+                    <div class="card">
+                        <h3>Estimasi Biaya Harian</h3>
+                        <p class="value">Rp 1.450.000</p>
+                    </div>
+                    <div class="card">
+                        <h3>Efisiensi Daya (PUE)</h3>
+                        <p class="value success-text">1.12</p>
+                    </div>
+                </div>
+
+                <div class="middle-section" style="grid-template-columns: 1fr 1fr;">
+                    <div class="card chart-container">
+                        <h3>Trend Konsumsi Energi Mingguan</h3>
+                        <canvas id="energyChart"></canvas>
+                    </div>
+                    <div class="card">
+                        <h3>Distribusi Beban Fasilitas</h3>
+                        <div style="margin-top: 20px;">
+                            <p>Line 1 (Mesin CNC & Milling) <span style="float: right; font-weight: bold;">45%</span></p>
+                            <div class="sensor-bar"><div class="sensor-fill warning" style="width: 45%;"></div></div>
+                            <br>
+                            <p>Line 2 (Conveyor & Assembly) <span style="float: right; font-weight: bold;">20%</span></p>
+                            <div class="sensor-bar"><div class="sensor-fill" style="width: 20%;"></div></div>
+                            <br>
+                            <p>Sistem Pendingin Utama (HVAC) <span style="float: right; font-weight: bold;">35%</span></p>
+                            <div class="sensor-bar"><div class="sensor-fill danger" style="width: 35%;"></div></div>
+                        </div>
+                    </div>
+                </div>
             </div>
 
             <!-- Sidebar Content: AI Settings -->
             <div id="view-ai" class="sidebar-view">
+                <div class="view-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                    <h2><i class="fas fa-robot"></i> Konfigurasi Artificial Intelligence</h2>
+                    <span class="badge badge-success" style="font-size: 0.9em;"><i class="fas fa-check-circle"></i> Azure ML Active</span>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                    <div class="card">
+                        <h3><i class="fas fa-brain"></i> Engine Deteksi Anomali</h3>
+                        <p style="color: var(--text-light); margin-bottom: 20px;">Model machine learning mendeteksi getaran dan suhu tidak wajar berdasarkan data historis.</p>
+                        
+                        <div class="control-item">
+                            <span>Status Engine</span>
+                            <button class="btn btn-start" id="ai-engine-btn" onclick="toggleAIEngine()">AKTIF</button>
+                        </div>
+                        
+                        <div style="margin-top: 20px;">
+                            <label for="ai-sensitivity" style="display: block; font-size: 0.9em; margin-bottom: 10px;">Sensitivitas Prediksi Anomali: <strong id="ai-sensitivity-val">75</strong>%</label>
+                            <input type="range" id="ai-sensitivity" min="10" max="100" value="75" oninput="updateMachineParam('ai-sensitivity')" style="width: 100%;">
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <h3><i class="fas fa-comments"></i> Azure OpenAI Integrasi Chatbot</h3>
+                        <p style="color: var(--text-light); margin-bottom: 20px;">Pengaturan koneksi API untuk asisten pintar VisiTrak.</p>
+                        
+                        <div style="margin-bottom: 15px;">
+                            <label style="display: block; font-size: 0.9em; margin-bottom: 5px;">Model LLM yang Digunakan:</label>
+                            <select style="width: 100%; padding: 10px; border-radius: 5px; border: 1px solid #e2e8f0; outline: none;">
+                                <option>GPT-4 Turbo (Disarankan)</option>
+                                <option>GPT-3.5 (Fast Response)</option>
+                                <option>Custom Fine-Tuned Model</option>
+                            </select>
+                        </div>
+
+                        <div style="margin-bottom: 15px;">
+                            <label style="display: block; font-size: 0.9em; margin-bottom: 5px;">API Key:</label>
+                            <input type="password" value="sk-proj-abcde1234567890" style="width: 100%; padding: 10px; border-radius: 5px; border: 1px solid #e2e8f0;" disabled>
+                        </div>
+
+                        <button class="btn btn-auto" style="width: 100%; padding: 10px;" onclick="testAIConnection()"><i class="fas fa-plug"></i> Test Connection</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sidebar Content: Laporan & Analitik -->
+            <div id="view-laporan" class="sidebar-view">
+                <div class="view-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                    <h2><i class="fas fa-file-alt"></i> Laporan Produksi & Efisiensi</h2>
+                    <div>
+                        <button class="btn btn-start" onclick="downloadReport('Excel')"><i class="fas fa-file-excel"></i> Export Excel</button>
+                        <button class="btn btn-emergency" style="width: auto; padding: 8px 15px; margin: 0; background-color: #ef4444;" onclick="downloadReport('PDF')"><i class="fas fa-file-pdf"></i> Export PDF</button>
+                    </div>
+                </div>
                 <section class="card">
-                    <h3><i class="fas fa-robot"></i> AI Settings</h3>
-                    <p style="margin-top: 15px;">Konfigurasi model deteksi anomali, threshold alarm, dan integrasi Microsoft Azure OpenAI untuk asisten chatbot.</p>
+                    <h3>Rekapitulasi OEE Mingguan</h3>
+                    <div class="table-responsive">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Tanggal</th>
+                                    <th>Line Produksi</th>
+                                    <th>Total Output</th>
+                                    <th>Target Output</th>
+                                    <th>Defect Rate</th>
+                                    <th>Nilai OEE</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr><td>25 Okt 2023</td><td>Line 1</td><td>1,240</td><td>1,300</td><td><span class="warning-text">2.1%</span></td><td><strong>92.4%</strong></td></tr>
+                                <tr><td>24 Okt 2023</td><td>Line 1</td><td>1,310</td><td>1,300</td><td><span class="success-text">0.8%</span></td><td><strong>95.1%</strong></td></tr>
+                                <tr><td>23 Okt 2023</td><td>Line 1</td><td>980</td><td>1,300</td><td><span class="danger-text">5.4%</span></td><td><strong class="danger-text">78.0%</strong></td></tr>
+                            </tbody>
+                        </table>
+                    </div>
                 </section>
+            </div>
+
+            <!-- Sidebar Content: Manajemen Pemeliharaan -->
+            <div id="view-pemeliharaan" class="sidebar-view">
+                <div class="view-header" style="margin-bottom: 20px;">
+                    <h2><i class="fas fa-tools"></i> Work Orders (Pemeliharaan)</h2>
+                    <p style="color: var(--text-light); margin-top: 5px;">Manajemen tugas perbaikan mesin untuk teknisi.</p>
+                </div>
+                
+                <div class="kanban-board">
+                    <!-- Kolom To Do -->
+                    <div class="kanban-column">
+                        <h3>To Do <span class="badge badge-danger">2</span></h3>
+                        <div class="kanban-card" style="border-left: 4px solid var(--danger);">
+                            <h4>Ganti Main Bearing</h4>
+                            <p class="text-small" style="color: var(--text-light); margin: 5px 0;">Sesuai rekomendasi Predictive AI.</p>
+                            <span class="badge badge-warning">CNC Alpha</span>
+                        </div>
+                        <div class="kanban-card" style="border-left: 4px solid var(--warning);">
+                            <h4>Kalibrasi Sensor Vibrasi</h4>
+                            <p class="text-small" style="color: var(--text-light); margin: 5px 0;">Jadwal pemeliharaan bulanan.</p>
+                            <span class="badge badge-warning">Milling Beta</span>
+                        </div>
+                    </div>
+                    <!-- Kolom In Progress -->
+                    <div class="kanban-column">
+                        <h3>In Progress <span class="badge badge-warning">1</span></h3>
+                        <div class="kanban-card" style="border-left: 4px solid var(--primary);">
+                            <h4>Inspeksi Sabuk Konveyor</h4>
+                            <p class="text-small" style="color: var(--text-light); margin: 5px 0;">Teknisi: Budi S.</p>
+                            <span class="badge badge-primary" style="background: #e0e7ff; color: #3730a3;">Conveyor A</span>
+                        </div>
+                    </div>
+                    <!-- Kolom Done -->
+                    <div class="kanban-column">
+                        <h3>Done <span class="badge badge-success">1</span></h3>
+                        <div class="kanban-card" style="border-left: 4px solid var(--success); opacity: 0.7;">
+                            <h4>Refill Coolant</h4>
+                            <p class="text-small" style="color: var(--text-light); margin: 5px 0;">Selesai pada: 10:45 AM</p>
+                            <span class="badge badge-success">Milling Beta</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sidebar Content: Log Alarm -->
+            <div id="view-alarm" class="sidebar-view">
+                <div class="view-header" style="margin-bottom: 20px;">
+                    <h2><i class="fas fa-bell"></i> Riwayat Alarm & Notifikasi</h2>
+                </div>
+                <section class="card">
+                    <div class="table-responsive">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Waktu Kejadian</th>
+                                    <th>Level</th>
+                                    <th>Sumber</th>
+                                    <th>Pesan Alarm</th>
+                                    <th>Analisis AI (RCA)</th>
+                                    <th>Tindakan Sistem</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>14:02:11</td><td><span class="badge badge-warning">Warning</span></td><td>Milling Beta</td><td>Suhu Spindle melebihi 88°C</td>
+                                    <td><button class="btn btn-auto" style="padding: 5px 10px; font-size: 0.8rem;" onclick="analyzeRootCause('Milling Beta Overheat')"><i class="fas fa-search"></i> AI RCA</button></td>
+                                    <td>Auto-reduce RPM (5%)</td>
+                                </tr>
+                                <tr>
+                                    <td>11:45:00</td><td><span class="badge badge-danger">Critical</span></td><td>Power Grid</td><td>Tegangan turun (Voltage Drop)</td>
+                                    <td><button class="btn btn-auto" style="padding: 5px 10px; font-size: 0.8rem;" onclick="analyzeRootCause('Power Grid Drop')"><i class="fas fa-search"></i> AI RCA</button></td>
+                                    <td>Switch ke Genset Backup</td>
+                                </tr>
+                                <tr>
+                                    <td>09:15:30</td><td><span class="badge badge-success">Info</span></td><td>AI Engine</td><td>Auto-Tune selesai dijalankan</td>
+                                    <td><span style="color: var(--text-light); font-size: 0.85rem;">N/A</span></td>
+                                    <td>Parameter dioptimalkan</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+            </div>
+
+            <!-- Sidebar Content: Pengaturan -->
+            <div id="view-pengaturan" class="sidebar-view">
+                <div class="view-header" style="margin-bottom: 20px;">
+                    <h2><i class="fas fa-cog"></i> Pengaturan Sistem & Pengguna</h2>
+                </div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                    <div class="card">
+                        <h3><i class="fas fa-user-shield"></i> Profil & Akses</h3>
+                        <div style="margin-top: 15px;">
+                            <label>Nama Pengguna:</label>
+                            <input type="text" value="Admin VisiTrak" style="width: 100%; padding: 8px; margin: 5px 0 15px 0; border: 1px solid #ddd; border-radius: 4px;" disabled>
+                            <label>Role / Peran:</label>
+                            <select style="width: 100%; padding: 8px; margin: 5px 0; border: 1px solid #ddd; border-radius: 4px;">
+                                <option selected>Administrator Super</option>
+                                <option>Teknisi Mesin</option>
+                                <option>Operator Shift</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="card">
+                        <h3><i class="fas fa-sliders-h"></i> Preferensi Global</h3>
+                        <div class="control-item" style="background: transparent; border: 1px solid #e2e8f0;"><span>Mode Gelap (Dark Mode)</span><button class="btn" style="background: #94a3b8;">OFF</button></div>
+                        <div class="control-item" style="background: transparent; border: 1px solid #e2e8f0;"><span>Kirim SMS Alert (Kritis)</span><button class="btn btn-start">ON</button></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sidebar Content: Visual QC -->
+            <div id="view-qc" class="sidebar-view">
+                <div class="view-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                    <h2><i class="fas fa-camera"></i> Computer Vision Quality Control</h2>
+                    <span class="badge badge-success" style="font-size: 0.9em;"><i class="fas fa-circle" style="color: #ef4444; animation: blink 1s infinite;"></i> Live Feed Active</span>
+                </div>
+                
+                <div class="middle-section" style="grid-template-columns: 2fr 1fr;">
+                    <div class="card" style="position: relative; background: #000; padding: 0; overflow: hidden; height: 400px; display: flex; align-items: center; justify-content: center;">
+                        <div style="color: #fff; opacity: 0.5; position: absolute; top: 10px; left: 10px; z-index: 10;">CAM-01 / LINE-A / 30FPS</div>
+                        <!-- Mock Video Background -->
+                        <div class="qc-video-mock"></div>
+                        <!-- Mock Bounding Box -->
+                        <div class="qc-bounding-box">
+                            <span class="qc-label">Goresan 89%</span>
+                        </div>
+                        <div class="qc-bounding-box good" style="top: 20%; left: 60%; border-color: #10b981;">
+                            <span class="qc-label" style="background: #10b981;">Normal 98%</span>
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <div class="card" style="margin-bottom: 20px;">
+                            <h3>Status Inspeksi Live</h3>
+                            <div style="margin-top: 15px;">
+                                <p style="font-size: 1.2rem;">Total Diperiksa: <strong id="qc-total">1,245</strong></p>
+                                <p style="font-size: 1.2rem; color: var(--success); margin-top: 10px;">Lolos (Good): <strong id="qc-good">1,230</strong></p>
+                                <p style="font-size: 1.2rem; color: var(--danger); margin-top: 10px;">Cacat (Defect): <strong id="qc-defect">15</strong></p>
+                            </div>
+                        </div>
+                        
+                        <div class="card">
+                            <h3>Distribusi Cacat</h3>
+                            <ul style="list-style: none; margin-top: 10px; color: var(--text-light);">
+                                <li style="margin-bottom: 5px; padding-bottom: 5px; border-bottom: 1px solid #e2e8f0;">Goresan Permukaan <span style="float: right; color: var(--text-main); font-weight: bold;">8</span></li>
+                                <li style="margin-bottom: 5px; padding-bottom: 5px; border-bottom: 1px solid #e2e8f0;">Dimensi Tidak Pas <span style="float: right; color: var(--text-main); font-weight: bold;">5</span></li>
+                                <li style="margin-bottom: 5px;">Warna Pudar <span style="float: right; color: var(--text-main); font-weight: bold;">2</span></li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
             </div>
 
         </main>

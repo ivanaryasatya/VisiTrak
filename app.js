@@ -1,5 +1,9 @@
 document.addEventListener("DOMContentLoaded", () => {
     initChart();
+    initEnergyChart();
+    
+    // Jalankan simulasi data sensor real-time
+    startRealTimeSimulation();
     
     // Enter key listener untuk chatbot
     document.getElementById("chat-input").addEventListener("keypress", function(e) {
@@ -33,6 +37,11 @@ function switchSidebarView(evt, viewId) {
     else if (viewId === 'view-mesin') pageTitle.innerText = "Manajemen Mesin";
     else if (viewId === 'view-energi') pageTitle.innerText = "Monitoring Energi Terpusat";
     else if (viewId === 'view-ai') pageTitle.innerText = "Konfigurasi Artificial Intelligence";
+    else if (viewId === 'view-laporan') pageTitle.innerText = "Laporan & Analitik";
+    else if (viewId === 'view-pemeliharaan') pageTitle.innerText = "Manajemen Pemeliharaan";
+    else if (viewId === 'view-alarm') pageTitle.innerText = "Log Alarm & Notifikasi";
+    else if (viewId === 'view-pengaturan') pageTitle.innerText = "Pengaturan Sistem";
+    else if (viewId === 'view-qc') pageTitle.innerText = "Visual Quality Control (AI)";
 }
 
 // --- Logika Sistem Tab ---
@@ -109,6 +118,30 @@ function initChart() {
     });
 }
 
+// --- Inisialisasi Grafik Energi (Chart.js) ---
+function initEnergyChart() {
+    const canvas = document.getElementById('energyChart');
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    
+    new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: ['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu', 'Minggu'],
+            datasets: [{
+                label: 'Konsumsi Energi Harian (kWh)',
+                data: [1100, 1400, 1350, 1600, 1500, 800, 600],
+                backgroundColor: '#10b981', // Success color
+                borderRadius: 4
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false
+        }
+    });
+}
+
 // --- Logika Panel Kontrol (Mock-up) ---
 function toggleMachine(machineId) {
     // Pada implementasi nyata, fungsi ini akan memanggil API ke PLC / Controller
@@ -157,4 +190,95 @@ function addMessageToChat(text, className) {
     
     // Auto-scroll ke bawah
     chatMessages.scrollTop = chatMessages.scrollHeight;
+}
+
+// --- Logika Interaksi & Simulasi Data Mesin Real-time ---
+function startRealTimeSimulation() {
+    // Update data setiap 1.5 detik
+    setInterval(() => {
+        // Fluktuasi nilai CNC Alpha (Kondisi Normal)
+        updateLiveValue('cnc-temp', 71.5, 73.5, 1);
+        updateLiveValue('cnc-vib', 2.0, 2.3, 2);
+        updateLiveValue('cnc-rpm', 12000, 12100, 0);
+
+        // Fluktuasi nilai Milling Beta (Kondisi Warning/Panas)
+        updateLiveValue('mill-temp', 87.0, 89.5, 1); 
+        updateLiveValue('mill-vib', 5.2, 5.8, 2);
+        updateLiveValue('mill-rpm', 8350, 8420, 0);
+        updateLiveValue('mill-coolant-pres', 1.1, 1.4, 1);
+        
+        // Fluktuasi indikator Energi Terpusat
+        updateLiveValue('current-power', 440, 470, 0);
+
+        // Simulasi hitungan live pada Visual QC
+        const qcGoodEl = document.getElementById('qc-good');
+        const qcTotalEl = document.getElementById('qc-total');
+        if (qcGoodEl && qcTotalEl && Math.random() > 0.6) {
+            let good = parseInt(qcGoodEl.innerText.replace(/,/g, ''));
+            let total = parseInt(qcTotalEl.innerText.replace(/,/g, ''));
+            good += 1; total += 1;
+            qcGoodEl.innerText = good.toLocaleString();
+            qcTotalEl.innerText = total.toLocaleString();
+        }
+    }, 1500); 
+}
+
+function updateLiveValue(elementId, min, max, decimals) {
+    const el = document.getElementById(elementId);
+    if (el) {
+        const randomVal = (Math.random() * (max - min) + min).toFixed(decimals);
+        el.innerText = randomVal;
+    }
+}
+
+function updateMachineParam(inputId) {
+    const inputEl = document.getElementById(inputId);
+    const displayEl = document.getElementById(inputId + '-val');
+    if (inputEl && displayEl) {
+        displayEl.innerText = inputEl.value;
+    }
+}
+
+function autoTune(machineName) {
+    alert(`AI Auto-Tuning diaktifkan untuk ${machineName}. \n\nAlgoritma mengkalkulasi feed-rate dan parameter termal terbaik untuk efisiensi maksimal.`);
+}
+
+function calibrateMachine(machineName) {
+    alert(`Sistem sedang mengeksekusi sekuens kalibrasi pada ${machineName}...`);
+}
+
+// --- Logika Pengaturan AI ---
+function toggleAIEngine() {
+    const btn = document.getElementById('ai-engine-btn');
+    if (btn.innerText === "AKTIF") {
+        btn.innerText = "NON-AKTIF";
+        btn.classList.replace('btn-start', 'btn-stop');
+        alert("Peringatan: Machine Learning untuk deteksi anomali dinonaktifkan.");
+    } else {
+        btn.innerText = "AKTIF";
+        btn.classList.replace('btn-stop', 'btn-start');
+    }
+}
+
+function testAIConnection() {
+    alert("Menguji koneksi ke server Microsoft Azure... \n\nKoneksi Berhasil! Latensi API: 45ms.");
+}
+
+// --- Logika Tambahan ---
+function downloadReport(format) {
+    alert(`Sedang mengenerate laporan dalam format ${format}...\nFile akan otomatis terunduh dalam beberapa detik.`);
+}
+
+function applyOptimization(btnElement) {
+    btnElement.innerHTML = "<i class='fas fa-check-double'></i> Diterapkan";
+    btnElement.classList.replace("btn-start", "btn-auto");
+    alert("Rekomendasi AI berhasil diterapkan ke seluruh mesin secara real-time. Efisiensi diproyeksikan meningkat 7% dalam shift ini.");
+}
+
+function analyzeRootCause(issueType) {
+    if(issueType === 'Milling Beta Overheat') {
+        alert("🔍 AI Root Cause Analysis:\n\nProbabilitas 85%: Overheat disebabkan oleh penurunan tekanan pompa coolant utama (turun 15%) 5 menit sebelum kejadian, yang berkorelasi dengan peningkatan getaran pada poros spindle.\n\nRekomendasi: Purge sistem coolant dan periksa filter.");
+    } else {
+        alert("🔍 AI Root Cause Analysis:\n\nProbabilitas 92%: Terjadi fluktuasi pasokan listrik dari gardu eksternal. Sistem UPS berhasil menahan beban sementara sebelum genset mengambil alih.\n\nRekomendasi: Lakukan sinkronisasi ulang fase pada panel LVMDP.");
+    }
 }
