@@ -19,10 +19,10 @@
                 <h2>VisiTrak</h2>
             </div>
             <ul class="nav-links">
-                <li class="active"><i class="fas fa-chart-line"></i> Dashboard</li>
-                <li><i class="fas fa-cogs"></i> Mesin</li>
-                <li><i class="fas fa-bolt"></i> Energi</li>
-                <li><i class="fas fa-robot"></i> AI Settings</li>
+                <li class="active" onclick="switchSidebarView(event, 'view-dashboard')"><i class="fas fa-chart-line"></i> Dashboard</li>
+                <li onclick="switchSidebarView(event, 'view-mesin')"><i class="fas fa-cogs"></i> Mesin</li>
+                <li onclick="switchSidebarView(event, 'view-energi')"><i class="fas fa-bolt"></i> Energi</li>
+                <li onclick="switchSidebarView(event, 'view-ai')"><i class="fas fa-robot"></i> AI Settings</li>
             </ul>
         </aside>
 
@@ -30,14 +30,16 @@
         <main class="main-content">
             <!-- Header -->
             <header>
-                <h1>Monitoring Otomatisasi Mesin</h1>
+                <h1 id="page-title">Monitoring Otomatisasi Mesin</h1>
                 <div class="ai-status healthy">
                     <i class="fas fa-brain"></i> AI Auto Detect: Normal (Tidak ada anomali)
                 </div>
             </header>
 
-            <!-- Tab Navigation -->
-            <div class="tabs">
+            <!-- View Content Wrapper -->
+            <div id="view-dashboard" class="sidebar-view active">
+                <!-- Tab Navigation -->
+                <div class="tabs">
                 <button class="tab-btn active" onclick="openTab(event, 'overview')"><i class="fas fa-home"></i> Overview</button>
                 <button class="tab-btn" onclick="openTab(event, 'diagnostics')"><i class="fas fa-microchip"></i> Live Diagnostics</button>
                 <button class="tab-btn" onclick="openTab(event, 'predictive')"><i class="fas fa-chart-pie"></i> Predictive AI</button>
@@ -209,6 +211,31 @@
                             </tbody>
                         </table>
                     </div>
+                </section>
+            </div>
+            </div> <!-- End of view-dashboard -->
+
+            <!-- Sidebar Content: Mesin -->
+            <div id="view-mesin" class="sidebar-view">
+                <section class="card">
+                    <h3><i class="fas fa-cogs"></i> Manajemen Mesin</h3>
+                    <p style="margin-top: 15px;">Halaman ini berisi daftar seluruh mesin yang terhubung, status maintenance, dan konfigurasi parameter operasional masing-masing mesin.</p>
+                </section>
+            </div>
+
+            <!-- Sidebar Content: Energi -->
+            <div id="view-energi" class="sidebar-view">
+                <section class="card">
+                    <h3><i class="fas fa-bolt"></i> Monitoring Energi</h3>
+                    <p style="margin-top: 15px;">Halaman ini menampilkan rincian konsumsi daya listrik per line produksi, estimasi biaya, serta rekomendasi efisiensi energi.</p>
+                </section>
+            </div>
+
+            <!-- Sidebar Content: AI Settings -->
+            <div id="view-ai" class="sidebar-view">
+                <section class="card">
+                    <h3><i class="fas fa-robot"></i> AI Settings</h3>
+                    <p style="margin-top: 15px;">Konfigurasi model deteksi anomali, threshold alarm, dan integrasi Microsoft Azure OpenAI untuk asisten chatbot.</p>
                 </section>
             </div>
 

@@ -237,6 +237,16 @@ th {
     to { opacity: 1; transform: translateY(0); }
 }
 
+/* Sidebar View System */
+.sidebar-view {
+    display: none;
+    animation: fadeIn 0.4s ease-in-out;
+}
+
+.sidebar-view.active {
+    display: block;
+}
+
 /* Advanced Sensor Telemetry Grid */
 .sensor-grid {
     display: grid;

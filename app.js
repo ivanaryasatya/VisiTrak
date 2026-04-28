@@ -9,6 +9,32 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 });
 
+// --- Logika Sidebar Navigation ---
+function switchSidebarView(evt, viewId) {
+    // Sembunyikan semua view konten
+    const views = document.getElementsByClassName("sidebar-view");
+    for (let i = 0; i < views.length; i++) {
+        views[i].classList.remove("active");
+    }
+
+    // Hapus class 'active' dari semua menu sidebar
+    const navLinks = document.querySelectorAll(".nav-links li");
+    for (let i = 0; i < navLinks.length; i++) {
+        navLinks[i].classList.remove("active");
+    }
+
+    // Tampilkan view yang dipilih
+    document.getElementById(viewId).classList.add("active");
+    evt.currentTarget.classList.add("active");
+
+    // Update judul header secara dinamis
+    const pageTitle = document.getElementById("page-title");
+    if (viewId === 'view-dashboard') pageTitle.innerText = "Monitoring Otomatisasi Mesin";
+    else if (viewId === 'view-mesin') pageTitle.innerText = "Manajemen Mesin";
+    else if (viewId === 'view-energi') pageTitle.innerText = "Monitoring Energi Terpusat";
+    else if (viewId === 'view-ai') pageTitle.innerText = "Konfigurasi Artificial Intelligence";
+}
+
 // --- Logika Sistem Tab ---
 function openTab(evt, tabId) {
     // Sembunyikan semua konten tab
