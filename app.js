@@ -34,6 +34,14 @@ document.addEventListener("DOMContentLoaded", () => {
             sendMessage();
         }
     });
+    
+    // Enter key listener untuk Global Chat
+    const globalChatInput = document.getElementById("global-chat-input");
+    if (globalChatInput) {
+        globalChatInput.addEventListener("keypress", function(e) {
+            if (e.key === "Enter") sendGlobalMessage();
+        });
+    }
 
     // --- Pengaturan Profil & Role Berdasarkan Data Login ---
     const userRole = sessionStorage.getItem('userRole');
@@ -99,6 +107,9 @@ document.addEventListener("DOMContentLoaded", () => {
                 listenForPendingUsers();
             }
         }
+        
+        // Inisialisasi Forum Chat Global setelah autentikasi profil
+        initGlobalChat();
     }
 
     // --- Sistem Presence (Online Status) & Force Logout Listener ---
@@ -177,6 +188,7 @@ function switchSidebarView(evt, viewId) {
     else if (viewId === 'view-laporan') pageTitle.innerText = "Laporan & Analitik";
     else if (viewId === 'view-pemeliharaan') pageTitle.innerText = "Manajemen Pemeliharaan";
     else if (viewId === 'view-alarm') pageTitle.innerText = "Log Alarm & Notifikasi";
+    else if (viewId === 'view-chat') pageTitle.innerText = "Forum Komunikasi Global";
     else if (viewId === 'view-pengaturan') pageTitle.innerText = "Pengaturan Sistem";
     else if (viewId === 'view-qc') pageTitle.innerText = "Visual Quality Control (AI)";
     
@@ -650,6 +662,172 @@ window.kickUser = async function(userId) {
         }
     }
 };
+
+// --- Logika Forum Chat Global ---
+// Kumpulan Emoji Lengkap untuk Picker
+const EMOJI_LIST = ['😀','😃','😄','😁','😆','😅','😂','🤣','🥲','☺️','😊','😇','🙂','🙃','😉','😌','😍','🥰','😘','😋','😛','😜','🤪','🤨','🧐','🤓','😎','🤩','🥳','😏','😒','😞','😔','😟','😕','🙁','☹️','😣','😖','😫','😩','🥺','😢','😭','😤','😠','😡','🤬','🤯','😳','🥵','🥶','😱','😨','😰','😥','😓','🤗','🤔','🫣','🤭','🤫','🤥','😶','😐','😑','😬','🫠','🙄','😯','😦','😧','😮','😲','🥱','😴','🤤','😪','😵','🤐','🥴','🤢','🤮','🤧','😷','🤒','🤕','🤑','🤠','😈','👿','👹','👺','🤡','💩','👻','💀','👽','👾','🤖','🎃','😺','😸','😹','😻','😼','😽','🙀','😿','😾','🙈','🙉','🙊','💋','💌','💘','💝','💖','💗','💓','💞','💕','💟','❣️','💔','❤️','🧡','💛','💚','💙','💜','🤎','🖤','🤍','💯','💢','💥','💫','💦','💨','💬','💭','💤','👋','🤚','🖐️','✋','🖖','👌','🤞','🫰','🤟','🤘','🤙','👈','👉','👆','🖕','👇','☝️','👍','👎','✊','👊','🤛','🤜','👏','🙌','🫶','👐','🤲','🤝','🙏','💪','🦾','👂','👀','👁️','👅','👄'];
+
+let globalChatUnsubscribe = null;
+function initGlobalChat() {
+    if (!db) return;
+    const container = document.getElementById('global-chat-messages');
+    
+    globalChatUnsubscribe = db.collection('global_chats')
+        .orderBy('timestamp', 'asc')
+        .onSnapshot(snapshot => {
+            container.innerHTML = '';
+            snapshot.forEach(doc => {
+                const data = doc.data();
+                renderGlobalMessage(doc.id, data, container);
+            });
+            // Auto-scroll ke bawah saat ada pesan baru
+            container.scrollTop = container.scrollHeight;
+        });
+}
+
+function renderGlobalMessage(msgId, data, container) {
+    const currentUserUid = sessionStorage.getItem('userUid');
+    const isAdmin = sessionStorage.getItem('userRole') === 'admin';
+    const isOwn = data.senderUid === currentUserUid;
+
+    const wrapper = document.createElement('div');
+    wrapper.className = `global-chat-wrapper ${isOwn ? 'own' : 'other'}`;
+
+    // Format Waktu
+    let timeStr = 'Sedang mengirim...';
+    if (data.timestamp) {
+        const date = data.timestamp.toDate();
+        timeStr = date.getHours().toString().padStart(2, '0') + ':' + date.getMinutes().toString().padStart(2, '0');
+    }
+
+    // Meta Info (Nama & Waktu)
+    const metaHtml = `<div class="global-chat-meta">${isOwn ? 'Anda' : data.senderName} • ${timeStr}</div>`;
+
+    // Reactions Aktif
+    let reactionsHtml = '<div class="global-chat-reactions">';
+    if (data.reactions) {
+        for (const [emoji, reacts] of Object.entries(data.reactions)) {
+            if (reacts.length > 0) {
+                const activeClass = reacts.includes(currentUserUid) ? 'active' : '';
+                reactionsHtml += `<div class="reaction-badge ${activeClass}" onclick="toggleGlobalReaction('${msgId}', '${emoji}')">${emoji} ${reacts.length}</div>`;
+            }
+        }
+    }
+    reactionsHtml += '</div>';
+
+    // Dropdown Emoji Picker HTML
+    let pickerHtml = `<div class="emoji-picker-dropdown ${isOwn ? 'right-align' : ''}" id="picker-${msgId}">`;
+    EMOJI_LIST.forEach(emoji => {
+        pickerHtml += `<div class="emoji-item" onclick="selectEmoji('${msgId}', '${emoji}', event)">${emoji}</div>`;
+    });
+    pickerHtml += `</div>`;
+
+    // Tombol Aksi (Tambah Reaksi & Hapus)
+    // Tombol Aksi (Hanya Hapus)
+    let actionBtns = `<div style="position: relative; display: flex; align-items: center;">`;
+    actionBtns += `<button type="button" class="reaction-add-btn" onclick="toggleEmojiPicker('${msgId}', event)" title="Tambah Reaksi"><i class="fas fa-smile"></i></button>`;
+    actionBtns += pickerHtml; // Letakkan picker berdampingan dengan tombol
+    if (isAdmin || isOwn) {
+        actionBtns += `<button class="chat-action-btn" onclick="deleteGlobalMessage('${msgId}')" title="Hapus Pesan"><i class="fas fa-trash"></i></button>`;
+    }
+    actionBtns += `</div>`;
+
+    wrapper.innerHTML = `
+        ${metaHtml}
+        <div style="display: flex; align-items: flex-start; gap: 5px; flex-direction: ${isOwn ? 'row-reverse' : 'row'};">
+            <div class="global-chat-bubble ${isOwn ? 'own' : 'other'}">${data.text}</div>
+            ${actionBtns}
+        </div>
+        ${reactionsHtml}
+    `;
+    container.appendChild(wrapper);
+}
+
+window.sendGlobalMessage = async function() {
+    const input = document.getElementById('global-chat-input');
+    const text = input.value.trim();
+    if (!text || !db) return;
+    
+    const userUid = sessionStorage.getItem('userUid');
+    const userName = sessionStorage.getItem('userName');
+    input.value = '';
+    
+    try {
+        await db.collection('global_chats').add({
+            text: text,
+            senderUid: userUid,
+            senderName: userName || 'Anonim',
+            timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+            reactions: {}
+            timestamp: firebase.firestore.FieldValue.serverTimestamp()
+        });
+    } catch(e) {
+        console.error("Gagal mengirim chat:", e);
+        alert("Gagal mengirim pesan.");
+    }
+};
+
+window.deleteGlobalMessage = async function(msgId) {
+    if (!db) return;
+    if (confirm("Yakin ingin menghapus pesan ini?")) {
+        try {
+            await db.collection('global_chats').doc(msgId).delete();
+        } catch(e) {
+            alert("Gagal menghapus pesan. Pastikan Anda memiliki hak akses (Admin/Pemilik).");
+        }
+    }
+};
+
+window.toggleGlobalReaction = async function(msgId, emoji) {
+    if (!db) return;
+    const userUid = sessionStorage.getItem('userUid');
+    const docRef = db.collection('global_chats').doc(msgId);
+    
+    try {
+        await db.runTransaction(async (transaction) => {
+            const doc = await transaction.get(docRef);
+            if (!doc.exists) return;
+            
+            const data = doc.data();
+            let reactions = data.reactions || {};
+            let emojiReacts = reactions[emoji] || [];
+
+            if (emojiReacts.includes(userUid)) {
+                emojiReacts = emojiReacts.filter(id => id !== userUid); // Hapus reaksi
+            } else {
+                emojiReacts.push(userUid); // Tambah reaksi
+            }
+            
+            reactions[emoji] = emojiReacts;
+            transaction.update(docRef, { reactions: reactions });
+        });
+    } catch(e) {
+        console.error("Gagal memberikan reaction:", e);
+    }
+};
+
+// Fungsi Kontrol Emoji Picker UI
+window.toggleEmojiPicker = function(msgId, event) {
+    event.stopPropagation(); // Mencegah klik menyebar agar tidak langsung tertutup
+    const picker = document.getElementById(`picker-${msgId}`);
+    const isActive = picker.classList.contains('active');
+    
+    // Tutup semua picker lain yang sedang terbuka
+    document.querySelectorAll('.emoji-picker-dropdown').forEach(el => el.classList.remove('active'));
+    
+    if (!isActive) { picker.classList.add('active'); }
+};
+
+window.selectEmoji = function(msgId, emoji, event) {
+    event.stopPropagation(); // Mencegah dropdown tertutup ganda dan bentrok fungsi
+    toggleGlobalReaction(msgId, emoji); // Simpan/Hapus reaksi di Firebase
+    document.getElementById(`picker-${msgId}`).classList.remove('active'); // Tutup picker
+};
+
+// Event listener global agar saat user klik area kosong mana pun, kotak emoji tertutup
+document.addEventListener('click', function() {
+    document.querySelectorAll('.emoji-picker-dropdown').forEach(el => el.classList.remove('active'));
+});
 
 // --- Logika Notifikasi Real-time Admin ---
 function listenForPendingUsers() {
