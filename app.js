@@ -94,6 +94,8 @@ document.addEventListener("DOMContentLoaded", () => {
             if (adminPanel) {
                 adminPanel.style.display = 'block';
                 loadAdminData();
+                // Mulai mendengarkan permintaan login baru secara real-time
+                listenForPendingUsers();
             }
         }
     }
@@ -579,6 +581,67 @@ window.updateUserStatus = async function(userId, isApproved) {
         } catch (e) {
             alert("Gagal memperbarui status pengguna.");
         }
+    }
+};
+
+// --- Logika Notifikasi Real-time Admin ---
+function listenForPendingUsers() {
+    if (!db) return;
+    
+    // Dengarkan perubahan pada koleksi users di mana approved = false
+    db.collection('users').where('approved', '==', false).onSnapshot(snapshot => {
+        snapshot.docChanges().forEach(change => {
+            const userData = change.doc.data();
+            const userId = change.doc.id;
+            
+            if (change.type === 'added') {
+                showAdminNotification(userId, userData.name || 'User Tanpa Nama', userData.email || 'Tanpa Email');
+            }
+            
+            // Jika user dihapus atau disetujui (dari popup maupun tabel), notifikasi akan hilang otomatis
+            if (change.type === 'removed' || (change.type === 'modified' && userData.approved === true)) {
+                const existingNotif = document.getElementById(`notif-${userId}`);
+                if (existingNotif) existingNotif.remove();
+            }
+        });
+    });
+}
+
+function showAdminNotification(userId, name, email) {
+    const container = document.getElementById('admin-notifications');
+    if (!container || document.getElementById(`notif-${userId}`)) return;
+
+    const notif = document.createElement('div');
+    notif.className = 'card';
+    notif.style = 'border-left: 4px solid var(--warning); box-shadow: 0 10px 25px rgba(0,0,0,0.2); animation: fadeIn 0.3s ease-in-out; padding: 15px; width: 320px; position: relative; background: var(--card-bg);';
+    notif.id = `notif-${userId}`;
+
+    notif.innerHTML = `
+        <button style="position:absolute; top:10px; right:10px; background:none; border:none; cursor:pointer; color: var(--text-light);" onclick="this.parentElement.remove()"><i class="fas fa-times"></i></button>
+        <h4 style="margin-bottom: 5px; color: var(--text-main); font-size: 1rem;"><i class="fas fa-user-plus" style="color: var(--warning);"></i> Permintaan Akses Baru</h4>
+        <p style="font-size: 0.85rem; color: var(--text-light); margin-bottom: 15px; line-height: 1.4;">
+            <strong>${name}</strong><br>(${email}) ingin masuk.
+        </p>
+        <div style="display: flex; gap: 10px;">
+            <button class="btn btn-start" style="flex: 1; padding: 8px; font-size: 0.85rem;" onclick="handleQuickApprove('${userId}', true)"><i class="fas fa-check"></i> Accept</button>
+            <button class="btn btn-emergency" style="flex: 1; padding: 8px; margin: 0; font-size: 0.85rem;" onclick="handleQuickApprove('${userId}', false)"><i class="fas fa-times"></i> Reject</button>
+        </div>
+    `;
+    container.appendChild(notif);
+}
+
+window.handleQuickApprove = async function(userId, isApproved) {
+    if (!db) return;
+    try {
+        if (isApproved) {
+            await db.collection('users').doc(userId).update({ approved: true });
+        } else {
+            await db.collection('users').doc(userId).delete(); // Hapus data user jika di-reject
+        }
+        loadAdminData(); // Refresh data tabel admin jika sedang terbuka
+    } catch (e) {
+        console.error("Gagal memproses permintaan:", e);
+        alert("Gagal memproses permintaan. Pastikan Anda memiliki koneksi dan hak akses.");
     }
 };
 
