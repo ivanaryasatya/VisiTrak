@@ -39,6 +39,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const userRole = sessionStorage.getItem('userRole');
     const userName = sessionStorage.getItem('userName');
     const userEmail = sessionStorage.getItem('userEmail');
+    const userUid = sessionStorage.getItem('userUid');
 
     if (userName) {
         document.querySelectorAll('.profile-info h4').forEach(el => el.innerText = userName);
@@ -98,6 +99,27 @@ document.addEventListener("DOMContentLoaded", () => {
                 listenForPendingUsers();
             }
         }
+    }
+
+    // --- Sistem Presence (Online Status) & Force Logout Listener ---
+    if (userUid && userUid !== 'local-admin' && db) {
+        // Tandai pengguna sebagai Online
+        db.collection('users').doc(userUid).update({ isOnline: true }).catch(e => console.warn(e));
+
+        // Dengarkan perintah Force Logout dari Admin
+        db.collection('users').doc(userUid).onSnapshot((doc) => {
+            if (doc.exists && doc.data().forceLogout === true) {
+                db.collection('users').doc(userUid).update({ forceLogout: false, isOnline: false }).then(() => {
+                    alert("Sesi Anda telah dihentikan oleh Administrator.");
+                    logoutUserAction();
+                });
+            }
+        });
+
+        // Tandai Offline saat tab browser ditutup
+        window.addEventListener('beforeunload', () => {
+            db.collection('users').doc(userUid).update({ isOnline: false });
+        });
     }
 });
 
@@ -483,18 +505,27 @@ function resetMachineSettings() {
 // --- Logika Keluar (Logout) ---
 function logout() {
     if (confirm("Apakah Anda yakin ingin keluar dari VisiTrak?")) {
-        if (auth) {
-            auth.signOut().then(() => {
-                sessionStorage.clear();
-                window.location.href = 'login.html';
-            }).catch(() => {
-                sessionStorage.clear();
-                window.location.href = 'login.html';
-            });
-        } else {
+        // Tandai Offline terlebih dahulu sebelum proses hapus sesi
+        const userUid = sessionStorage.getItem('userUid');
+        if (userUid && userUid !== 'local-admin' && db) {
+            db.collection('users').doc(userUid).update({ isOnline: false });
+        }
+        logoutUserAction();
+    }
+}
+
+function logoutUserAction() {
+    if (auth) {
+        auth.signOut().then(() => {
             sessionStorage.clear();
             window.location.href = 'login.html';
-        }
+        }).catch(() => {
+            sessionStorage.clear();
+            window.location.href = 'login.html';
+        });
+    } else {
+        sessionStorage.clear();
+        window.location.href = 'login.html';
     }
 }
 
@@ -514,39 +545,51 @@ async function loadAdminData() {
             }
         }
 
-        // Loop semua data pengguna dan muat di tabel
-        const usersSnapshot = await db.collection('users').get();
-        const tbody = document.querySelector('#users-table tbody');
-        if(tbody) tbody.innerHTML = '';
-        
-        usersSnapshot.forEach(doc => {
-            const data = doc.data();
-            const tr = document.createElement('tr');
-            
-            const approvedBadge = data.approved 
-                ? `<span class="badge badge-success">Disetujui</span>` 
-                : `<span class="badge badge-warning">Menunggu</span>`;
+        // Gunakan onSnapshot agar tabel merespons perubahan secara real-time
+        if (!window.usersListenerUnsubscribe) {
+            window.usersListenerUnsubscribe = db.collection('users').onSnapshot(usersSnapshot => {
+                const tbody = document.querySelector('#users-table tbody');
+                if(tbody) tbody.innerHTML = '';
                 
-            const actionBtn = data.approved
-                ? `<button class="btn btn-warning" style="padding: 5px 10px; font-size: 0.8rem;" onclick="updateUserStatus('${doc.id}', false)">Cabut Akses</button>`
-                : `<button class="btn btn-start" style="padding: 5px 10px; font-size: 0.8rem;" onclick="updateUserStatus('${doc.id}', true)">Setujui</button>`;
-                
-            const adminBtn = data.role === 'admin'
-                ? ``
-                : `<button class="btn btn-auto" style="padding: 5px 10px; font-size: 0.8rem; margin-left: 5px;" onclick="updateUserRole('${doc.id}', 'admin')">Jadikan Admin</button>`;
+                usersSnapshot.forEach(doc => {
+                    const data = doc.data();
+                    const tr = document.createElement('tr');
+                    
+                    const approvedBadge = data.approved 
+                        ? `<span class="badge badge-success">Disetujui</span>` 
+                        : `<span class="badge badge-warning">Menunggu</span>`;
+                        
+                    const onlineBadge = data.isOnline
+                        ? `<br><span class="badge badge-success" style="background:#d1fae5; color:#10b981; margin-top:5px; display:inline-block;"><i class="fas fa-circle" style="font-size:8px;"></i> Online</span>`
+                        : `<br><span class="badge badge-light" style="background:#f1f5f9; color:#94a3b8; margin-top:5px; display:inline-block;"><i class="fas fa-circle" style="font-size:8px;"></i> Offline</span>`;
+                        
+                    const actionBtn = data.approved
+                        ? `<button class="btn btn-warning" style="padding: 5px 10px; font-size: 0.8rem;" onclick="updateUserStatus('${doc.id}', false)">Cabut Akses</button>`
+                        : `<button class="btn btn-start" style="padding: 5px 10px; font-size: 0.8rem;" onclick="updateUserStatus('${doc.id}', true)">Setujui</button>`;
+                        
+                    const adminBtn = data.role === 'admin'
+                        ? ``
+                        : `<button class="btn btn-auto" style="padding: 5px 10px; font-size: 0.8rem; margin-left: 5px;" onclick="updateUserRole('${doc.id}', 'admin')">Jadikan Admin</button>`;
 
-            tr.innerHTML = `
-                <td>${data.name || 'N/A'}</td>
-                <td>${data.email || 'N/A'}</td>
-                <td><span class="badge ${data.role === 'admin' ? 'badge-primary' : 'badge-light'}" style="${data.role === 'admin' ? 'background:#e0e7ff; color:#3730a3;' : 'background:#f1f5f9; color:#64748b;'}">${data.role || 'user'}</span></td>
-                <td>${approvedBadge}</td>
-                <td>
-                    ${data.role !== 'admin' ? actionBtn : '<i>Akses Penuh</i>'}
-                    ${data.role !== 'admin' ? adminBtn : ''}
-                </td>
-            `;
-            if(tbody) tbody.appendChild(tr);
-        });
+                    const kickBtn = (data.isOnline && data.role !== 'admin')
+                        ? `<button class="btn btn-emergency" style="padding: 5px 10px; font-size: 0.8rem; margin-left: 5px; width:auto; margin-top:0;" onclick="kickUser('${doc.id}')"><i class="fas fa-sign-out-alt"></i> Kick</button>`
+                        : ``;
+
+                    tr.innerHTML = `
+                        <td>${data.name || 'N/A'} ${onlineBadge}</td>
+                        <td>${data.email || 'N/A'}</td>
+                        <td><span class="badge ${data.role === 'admin' ? 'badge-primary' : 'badge-light'}" style="${data.role === 'admin' ? 'background:#e0e7ff; color:#3730a3;' : 'background:#f1f5f9; color:#64748b;'}">${data.role || 'user'}</span></td>
+                        <td>${approvedBadge}</td>
+                        <td>
+                            ${data.role !== 'admin' ? actionBtn : '<i>Akses Penuh</i>'}
+                            ${data.role !== 'admin' ? adminBtn : ''}
+                            ${kickBtn}
+                        </td>
+                    `;
+                    if(tbody) tbody.appendChild(tr);
+                });
+            });
+        }
     } catch (e) {
         console.error("Gagal memuat data admin dari Firebase:", e);
     }
@@ -580,6 +623,17 @@ window.updateUserStatus = async function(userId, isApproved) {
             loadAdminData(); // Refresh UI Table
         } catch (e) {
             alert("Gagal memperbarui status pengguna.");
+        }
+    }
+};
+
+window.kickUser = async function(userId) {
+    if (!db) return;
+    if (confirm("Yakin ingin mengeluarkan (kick) pengguna ini secara paksa? Sesi mereka akan segera diakhiri.")) {
+        try {
+            await db.collection('users').doc(userId).update({ forceLogout: true });
+        } catch (e) {
+            alert("Gagal mengeluarkan pengguna. Pastikan Anda memiliki hak akses.");
         }
     }
 };

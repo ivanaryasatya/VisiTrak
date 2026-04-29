@@ -115,6 +115,7 @@
                     sessionStorage.setItem('userRole', userData.role);
                     sessionStorage.setItem('userName', userData.name);
                     sessionStorage.setItem('userEmail', userData.email);
+                    sessionStorage.setItem('userUid', user.uid);
                     window.location.href = 'index.html';
                 } else {
                     await auth.signOut();
@@ -137,6 +138,7 @@
                 sessionStorage.setItem('userRole', 'admin');
                 sessionStorage.setItem('userName', 'Super Admin (Local)');
                 sessionStorage.setItem('userEmail', 'admin@visitrak.local');
+                sessionStorage.setItem('userUid', 'local-admin');
                 window.location.href = 'index.html';
                 return;
             }
@@ -154,6 +156,7 @@
                         sessionStorage.setItem('userRole', userData.role);
                         sessionStorage.setItem('userName', userData.name);
                         sessionStorage.setItem('userEmail', userData.email);
+                        sessionStorage.setItem('userUid', user.uid);
                         window.location.href = 'index.html';
                     } else {
                         await auth.signOut();
