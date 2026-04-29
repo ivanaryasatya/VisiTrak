@@ -17,13 +17,17 @@
         <!-- Sidebar -->
         <div id="sidebar-overlay" onclick="toggleSidebar()"></div>
         <aside class="sidebar" id="sidebar">
-            <div class="logo">
-                <i class="fas fa-industry"></i>
-                <h2>VisiTrak</h2>
+            <div class="logo" style="justify-content: space-between;">
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <i class="fas fa-industry"></i>
+                    <h2>VisiTrak</h2>
+                </div>
+                <button style="background: transparent; border: none; color: white; font-size: 1.2rem; cursor: pointer;" onclick="toggleSidebar()"><i class="fas fa-times"></i></button>
             </div>
             <ul class="nav-links">
                 <li class="active" onclick="switchSidebarView(event, 'view-dashboard')"><i class="fas fa-chart-line"></i> Dashboard</li>
                 <li onclick="switchSidebarView(event, 'view-mesin')"><i class="fas fa-cogs"></i> Mesin</li>
+                <li onclick="switchSidebarView(event, 'view-pengaturan-mesin')"><i class="fas fa-sliders-h"></i> Pengaturan Mesin</li>
                 <li onclick="switchSidebarView(event, 'view-energi')"><i class="fas fa-bolt"></i> Energi</li>
                 <li onclick="switchSidebarView(event, 'view-ai')"><i class="fas fa-robot"></i> AI Settings</li>
                 <li onclick="switchSidebarView(event, 'view-laporan')"><i class="fas fa-file-alt"></i> Laporan</li>
@@ -32,6 +36,15 @@
                 <li onclick="switchSidebarView(event, 'view-pengaturan')"><i class="fas fa-cog"></i> Pengaturan</li>
                 <li onclick="switchSidebarView(event, 'view-qc')"><i class="fas fa-camera"></i> Visual QC</li>
             </ul>
+
+            <!-- Profil Sidebar -->
+            <div class="sidebar-profile" onclick="openUserProfile()">
+                <img src="https://ui-avatars.com/api/?name=Admin+VisiTrak&background=2563eb&color=fff" alt="Profile Avatar" class="profile-avatar">
+                <div class="profile-info">
+                    <h4>Admin VisiTrak</h4>
+                    <p>Administrator Super</p>
+                </div>
+            </div>
         </aside>
 
         <!-- Main Content -->
@@ -291,6 +304,91 @@
                             <button class="btn btn-emergency" style="flex: 1; padding: 8px;" onclick="toggleMachine('milling-beta')"><i class="fas fa-power-off"></i> E-STOP</button>
                         </div>
                     </div>
+                </div>
+            </div>
+
+            <!-- Sidebar Content: Pengaturan Mesin -->
+            <div id="view-pengaturan-mesin" class="sidebar-view">
+                <div class="view-header" style="margin-bottom: 20px;">
+                    <h2><i class="fas fa-sliders-h"></i> Pengaturan Konfigurasi Mesin</h2>
+                    <p style="color: var(--text-light); margin-top: 5px;">Kelola parameter, batas alarm, dan konektivitas IoT untuk setiap mesin.</p>
+                </div>
+
+                <div class="card" style="margin-bottom: 20px; border-left: 4px solid var(--primary);">
+                    <label style="font-weight: bold; margin-bottom: 10px; display: block;">Pilih Mesin untuk Dikonfigurasi:</label>
+                    <select id="machine-selector" onchange="loadMachineSettings()" style="width: 100%; max-width: 400px; padding: 10px; border-radius: 5px; border: 1px solid #e2e8f0; font-size: 1rem; outline: none;">
+                        <option value="cnc-alpha">CNC Alpha (Milling & Turning)</option>
+                        <option value="mill-beta">Milling Beta (5-Axis)</option>
+                        <option value="conv-a">Conveyor Line A</option>
+                    </select>
+                </div>
+
+                <div class="machine-settings-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px;">
+                    <!-- Parameter Operasional -->
+                    <div class="card">
+                        <h3><i class="fas fa-cogs"></i> Parameter Operasional Dasar</h3>
+                        <div style="margin-top: 15px;">
+                            <div class="form-group" style="margin-bottom: 15px;">
+                                <label style="font-size: 0.9rem;">Max Default RPM:</label>
+                                <input type="number" id="set-max-rpm" value="15000" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; margin-top: 5px; outline: none;">
+                            </div>
+                            <div class="form-group" style="margin-bottom: 15px;">
+                                <label style="font-size: 0.9rem;">Target Tekanan Coolant (Bar):</label>
+                                <input type="number" step="0.1" id="set-coolant" value="1.5" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; margin-top: 5px; outline: none;">
+                            </div>
+                            <div class="form-group" style="margin-bottom: 15px;">
+                                <label style="font-size: 0.9rem;">Mode Operasi Default:</label>
+                                <select style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; margin-top: 5px; outline: none;">
+                                    <option>Auto-Tune AI</option>
+                                    <option>Manual Override</option>
+                                    <option>Eco Mode (Hemat Energi)</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Batas Anomali (Thresholds) -->
+                    <div class="card">
+                        <h3><i class="fas fa-exclamation-triangle"></i> Batas Toleransi & Alarm</h3>
+                        <div style="margin-top: 15px;">
+                            <div class="form-group" style="margin-bottom: 15px;">
+                                <label style="font-size: 0.9rem;">Batas Suhu Kritis (°C):</label>
+                                <input type="number" id="set-max-temp" value="85" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; margin-top: 5px; outline: none;">
+                            </div>
+                            <div class="form-group" style="margin-bottom: 15px;">
+                                <label style="font-size: 0.9rem;">Batas Vibrasi (mm/s):</label>
+                                <input type="number" step="0.1" id="set-max-vib" value="5.0" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; margin-top: 5px; outline: none;">
+                            </div>
+                            <div class="form-group" style="margin-bottom: 15px;">
+                                <label style="font-size: 0.9rem;">Tindakan Jika Kritis:</label>
+                                <select style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; margin-top: 5px; outline: none;">
+                                    <option>Hanya Notifikasi (Warning)</option>
+                                    <option>Turunkan Kecepatan Otomatis (Throttling)</option>
+                                    <option selected>Emergency Stop (E-Stop)</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Konektivitas IoT -->
+                    <div class="card">
+                        <h3><i class="fas fa-wifi"></i> Konektivitas IoT & Sensor</h3>
+                        <div style="margin-top: 15px;">
+                            <div class="form-group" style="margin-bottom: 15px;">
+                                <label style="font-size: 0.9rem;">IP Address PLC:</label>
+                                <input type="text" id="set-ip" value="192.168.1.101" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; margin-top: 5px; outline: none;">
+                            </div>
+                            <div class="form-group" style="margin-bottom: 15px;">
+                                <label style="font-size: 0.9rem;">Polling Rate Sensor (ms):</label>
+                                <input type="number" id="set-polling" value="1500" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; margin-top: 5px; outline: none;">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div style="margin-top: 20px; display: flex; gap: 15px; justify-content: flex-end;">
+                    <button class="btn" style="background: #e2e8f0; color: var(--text-main);" onclick="resetMachineSettings()"><i class="fas fa-undo"></i> Reset Default</button>
+                    <button class="btn btn-start" onclick="saveMachineSettings()"><i class="fas fa-save"></i> Simpan Pengaturan</button>
                 </div>
             </div>
 
@@ -587,6 +685,40 @@
             <div class="chat-input-area">
                 <input type="text" id="chat-input" placeholder="Tanyakan anomali mesin...">
                 <button onclick="sendMessage()"><i class="fas fa-paper-plane"></i></button>
+            </div>
+        </div>
+    </div>
+
+    <!-- User Profile Modal -->
+    <div id="user-profile-modal" class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2><i class="fas fa-user-circle"></i> Profil Pengguna</h2>
+                <span class="close-modal" onclick="closeUserProfile()">&times;</span>
+            </div>
+            <div class="modal-body user-profile-details">
+                <img src="https://ui-avatars.com/api/?name=Admin+VisiTrak&background=2563eb&color=fff&size=128" alt="Profile Large" class="profile-avatar-large">
+                <div class="profile-detail-group">
+                    <label>Nama Lengkap</label>
+                    <p>Admin VisiTrak</p>
+                </div>
+                <div class="profile-detail-group">
+                    <label>Peran / Role</label>
+                    <p>Administrator Super</p>
+                </div>
+                <div class="profile-detail-group">
+                    <label>Email</label>
+                    <p>admin.visitrak@company.com</p>
+                </div>
+                <div class="profile-detail-group">
+                    <label>Departemen</label>
+                    <p>IT & System Engineering</p>
+                </div>
+                <div class="profile-detail-group">
+                    <label>Status Akun</label>
+                    <p><span class="badge badge-success">Aktif</span></p>
+                </div>
+                <button class="btn btn-emergency" style="width: 100%; margin-top: 15px;" onclick="logout()"><i class="fas fa-sign-out-alt"></i> Keluar (Logout)</button>
             </div>
         </div>
     </div>

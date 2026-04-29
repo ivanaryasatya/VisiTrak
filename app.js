@@ -1,3 +1,8 @@
+// --- Keamanan Akses (Route Guard) Sederhana ---
+if (sessionStorage.getItem('isLoggedIn') !== 'true') {
+    window.location.href = 'login.html'; // Tendang kembali ke halaman login jika belum masuk
+}
+
 document.addEventListener("DOMContentLoaded", () => {
     initChart();
     initEnergyChart();
@@ -17,8 +22,13 @@ document.addEventListener("DOMContentLoaded", () => {
 function toggleSidebar() {
     const sidebar = document.getElementById('sidebar');
     const overlay = document.getElementById('sidebar-overlay');
-    sidebar.classList.toggle('active');
-    overlay.classList.toggle('active');
+    
+    if (window.innerWidth <= 768) {
+        sidebar.classList.toggle('active');
+        overlay.classList.toggle('active');
+    } else {
+        sidebar.classList.toggle('collapsed');
+    }
 }
 
 // --- Logika Sidebar Navigation ---
@@ -43,6 +53,7 @@ function switchSidebarView(evt, viewId) {
     const pageTitle = document.getElementById("page-title");
     if (viewId === 'view-dashboard') pageTitle.innerText = "Monitoring Otomatisasi Mesin";
     else if (viewId === 'view-mesin') pageTitle.innerText = "Manajemen Mesin";
+    else if (viewId === 'view-pengaturan-mesin') pageTitle.innerText = "Pengaturan Konfigurasi Mesin";
     else if (viewId === 'view-energi') pageTitle.innerText = "Monitoring Energi Terpusat";
     else if (viewId === 'view-ai') pageTitle.innerText = "Konfigurasi Artificial Intelligence";
     else if (viewId === 'view-laporan') pageTitle.innerText = "Laporan & Analitik";
@@ -176,7 +187,7 @@ function toggleChat() {
     }
 }
 
-function sendMessage() {
+async function sendMessage() {
     const input = document.getElementById('chat-input');
     const messageText = input.value.trim();
     
@@ -186,19 +197,65 @@ function sendMessage() {
     addMessageToChat(messageText, 'user-message');
     input.value = '';
 
-    // 2. Simulasi delay dan balasan dari "AI" (karena API Azure belum dipasang)
-    setTimeout(() => {
-        const dummyResponse = "Terima kasih atas pertanyaannya. Saat ini saya masih dalam mode simulasi UI. Modul integrasi ke Microsoft Azure AI akan dipasang di tahap berikutnya.";
-        addMessageToChat(dummyResponse, 'ai-message');
-    }, 1000);
+    // Tampilkan indikator loading sementara
+    const loadingId = 'loading-' + Date.now();
+    addMessageToChat('Sedang berpikir...', 'ai-message', loadingId);
+
+    // 2. Konfigurasi Azure OpenAI
+    // PENTING: Ganti nilai-nilai di bawah ini dengan kredensial Azure Anda!
+    const azureEndpoint = "https://RESOURCE-ANDA.openai.azure.com"; 
+    const apiKey = "API_KEY_AZURE_ANDA"; 
+    const deploymentName = "NAMA-DEPLOYMENT-ANDA"; // misal: gpt-35-turbo
+    const apiVersion = "2024-02-15-preview";
+    
+    const url = `${azureEndpoint}/openai/deployments/${deploymentName}/chat/completions?api-version=${apiVersion}`;
+
+    try {
+        const response = await fetch(url, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'api-key': apiKey
+            },
+            body: JSON.stringify({
+                messages: [
+                    { role: "system", content: "Anda adalah VisiTrak AI Assistant, seorang asisten ahli untuk operator pabrik. Anda memberikan analisa Root Cause, rekomendasi maintenance, dan status operasional. Jawab dengan ringkas, profesional, dan dalam bahasa Indonesia." },
+                    { role: "user", content: messageText }
+                ],
+                max_tokens: 200,
+                temperature: 0.7
+            })
+        });
+
+        const data = await response.json();
+        
+        // Hapus pesan loading
+        const loadingMessage = document.getElementById(loadingId);
+        if (loadingMessage) loadingMessage.remove();
+
+        if (response.ok) {
+            // Ambil balasan teks dari AI dan tampilkan
+            const aiReply = data.choices[0].message.content;
+            addMessageToChat(aiReply, 'ai-message');
+        } else {
+            console.error("Azure API Error:", data);
+            addMessageToChat("Maaf, terjadi kesalahan API. Silakan cek console.", 'ai-message');
+        }
+    } catch (error) {
+        console.error("Fetch Error:", error);
+        const loadingMessage = document.getElementById(loadingId);
+        if (loadingMessage) loadingMessage.remove();
+        addMessageToChat("Gagal terhubung ke jaringan Azure.", 'ai-message');
+    }
 }
 
-function addMessageToChat(text, className) {
+function addMessageToChat(text, className, id = null) {
     const chatMessages = document.getElementById('chat-messages');
     
     const messageDiv = document.createElement('div');
     messageDiv.classList.add('message', className);
     messageDiv.innerText = text;
+    if (id) messageDiv.id = id;
     
     chatMessages.appendChild(messageDiv);
     
@@ -294,5 +351,56 @@ function analyzeRootCause(issueType) {
         alert("🔍 AI Root Cause Analysis:\n\nProbabilitas 85%: Overheat disebabkan oleh penurunan tekanan pompa coolant utama (turun 15%) 5 menit sebelum kejadian, yang berkorelasi dengan peningkatan getaran pada poros spindle.\n\nRekomendasi: Purge sistem coolant dan periksa filter.");
     } else {
         alert("🔍 AI Root Cause Analysis:\n\nProbabilitas 92%: Terjadi fluktuasi pasokan listrik dari gardu eksternal. Sistem UPS berhasil menahan beban sementara sebelum genset mengambil alih.\n\nRekomendasi: Lakukan sinkronisasi ulang fase pada panel LVMDP.");
+    }
+}
+
+// --- Logika Profil Pengguna (Modal) ---
+function openUserProfile() {
+    document.getElementById('user-profile-modal').classList.add('active');
+}
+
+function closeUserProfile() {
+    document.getElementById('user-profile-modal').classList.remove('active');
+}
+
+// --- Logika Halaman Pengaturan Mesin ---
+function loadMachineSettings() {
+    const selector = document.getElementById('machine-selector').value;
+    
+    // Simulasi data konfigurasi yang berbeda untuk tiap mesin
+    const data = {
+        'cnc-alpha': { rpm: 15000, coolant: 1.5, temp: 85, vib: 5.0, ip: '192.168.1.101', polling: 1500 },
+        'mill-beta': { rpm: 10000, coolant: 2.0, temp: 90, vib: 6.5, ip: '192.168.1.102', polling: 1000 },
+        'conv-a': { rpm: 1500, coolant: 0, temp: 60, vib: 2.5, ip: '192.168.1.105', polling: 2000 }
+    };
+
+    const config = data[selector];
+    if(config) {
+        document.getElementById('set-max-rpm').value = config.rpm;
+        document.getElementById('set-coolant').value = config.coolant;
+        document.getElementById('set-max-temp').value = config.temp;
+        document.getElementById('set-max-vib').value = config.vib;
+        document.getElementById('set-ip').value = config.ip;
+        document.getElementById('set-polling').value = config.polling;
+    }
+}
+
+function saveMachineSettings() {
+    const machineName = document.getElementById('machine-selector').options[document.getElementById('machine-selector').selectedIndex].text;
+    alert(`Berhasil!\n\nPengaturan untuk ${machineName} telah disimpan dan disinkronisasi ke Controller PLC secara real-time.`);
+}
+
+function resetMachineSettings() {
+    if(confirm("Peringatan!\n\nApakah Anda yakin ingin mengembalikan pengaturan mesin ini ke parameter Default Pabrik (Factory Reset)?")) {
+        loadMachineSettings(); // Muat ulang data default
+        alert("Pengaturan dikembalikan ke default.");
+    }
+}
+
+// --- Logika Keluar (Logout) ---
+function logout() {
+    if (confirm("Apakah Anda yakin ingin keluar dari VisiTrak?")) {
+        sessionStorage.removeItem('isLoggedIn');
+        window.location.href = 'login.html';
     }
 }

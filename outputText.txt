@@ -1,0 +1,55 @@
+Project Brief Hackathon Microsoft Elevate Training Center
+
+Tim Pengembang:
+1. Atha Khoireng AyyASUuuiii (iyas123yas@gmail.com)
+2. Ivan Aryasatya (ivanas.thestar@gmail.com)
+
+Topik : Manufaktur & Energi
+
+=============================================================================
+
+RINGKASAN EKSEKUTIF
+Latar Belakang: Di era Industri 4.0, efisiensi operasional pabrik dan manajemen energi adalah dua pilar penentu profitabilitas. Sayangnya, banyak fasilitas produksi masih mengandalkan perawatan reaktif (memperbaiki setelah rusak) dan pemantauan kualitas manual yang rentan terhadap human-error.
+Problem Statement: 1) Downtime mesin yang tidak terencana (unplanned downtime) menyebabkan kerugian finansial masif. 2) Lonjakan konsumsi energi seringkali tidak disadari hingga tagihan membengkak. 3) Inspeksi kualitas (QC) manual lambat dan tidak konsisten.
+Research Questions: Bagaimana mengintegrasikan telemetri mesin, pemantauan energi, dan sistem kontrol kualitas dalam satu platform? Bagaimana AI dapat mendeteksi anomali sebelum kerusakan parah terjadi dan mengoptimalkan penggunaan energi secara otomatis?
+Mengapa memilih proyek ini (Painkiller vs Vitamin): Proyek ini adalah "Painkiller". Kerusakan mesin dadakan dan pemborosan energi adalah "pendarahan" finansial bagi pabrik. Kami tidak sekadar membuat dashboard pelaporan (vitamin), melainkan sistem AI prediktif dan otomasi yang langsung menghentikan kerugian operasional tersebut dengan memberikan rekomendasi *actionable* (seperti menurunkan RPM mesin untuk menghemat daya tanpa mengurangi output).
+
+DESKRIPSI PRODUCT/APLIKASI
+Nama Produk: VisiTrak - Advanced Industrial Monitoring
+VisiTrak adalah sistem pemantauan dan otomasi cerdas terpusat (Smart Centralized Dashboard) untuk industri manufaktur. Fungsi utamanya adalah menyatukan data telemetri mesin real-time, analitik konsumsi energi, prediksi pemeliharaan, dan inspeksi Visual Quality Control (QC) berbasis Computer Vision. Produk ini menyelesaikan masalah inefisiensi dengan menyediakan "Mata dan Otak" digital bagi operator pabrik, memberikan peringatan dini (early warning) atas anomali mesin, dan merekomendasikan kalibrasi operasional untuk optimalisasi OEE (Overall Equipment Effectiveness) serta efisiensi daya mesin secara instan.
+
+FITUR UTAMA DAN TEKNOLOGI YANG DIGUNAKAN
+Fitur Utama:
+- Live Diagnostics & Telemetry: Pemantauan suhu, vibrasi, dan RPM mesin secara real-time.
+- Predictive AI Maintenance: Peringatan dini jadwal penggantian komponen sebelum terjadi kerusakan.
+- AI Process Optimizer: Rekomendasi otomatis penyesuaian parameter mesin (Auto-Tune) untuk hemat energi.
+- Centralized Energy Monitoring: Visualisasi beban listrik per lini produksi.
+- Computer Vision QC: Deteksi cacat produk di atas konveyor secara otomatis (simulasi visual).
+- Azure AI Assistant Chatbot: Asisten pintar untuk analisis Root Cause (RCA) atas alarm/log mesin.
+
+Teknologi/Tools yang Digunakan:
+- Frontend: HTML5, CSS3 (Native Custom CSS), JavaScript (Vanilla, ES6)
+- Data Visualisasi: Chart.js
+- UI/UX Asset: FontAwesome Icons
+- Integrasi Backend/AI (Rencana/Simulasi): Microsoft Azure Machine Learning (Anomali Deteksi) & Azure OpenAI (LLM Chatbot)
+
+CARA PENGGUNAAN PRODUCT
+Sudut Pandang Pengguna (Operator/Manajer Pabrik):
+1. Buka file `index.html` menggunakan peramban web modern (Google Chrome/Edge). Tidak diperlukan instalasi khusus atau login credential (pada versi demo ini).
+2. Overview Dashboard: Pengguna langsung disambut dengan status OEE, grafik efisiensi output vs energi, dan rekomendasi "AI Process Optimizer" yang bisa langsung diterapkan (Klik "Terapkan").
+3. Manajemen Mesin: Navigasi ke menu "Mesin" di sidebar. Pengguna dapat melihat peringatan *overheat* pada Milling Beta, lalu melakukan *override* (menyesuaikan kecepatan) atau menekan tombol "Purge Coolant".
+4. Visual QC: Navigasi ke menu "Visual QC" untuk melihat simulasi kamera AI mendeteksi produk yang cacat secara real-time di atas konveyor.
+5. Interaksi Asisten: Klik widget chatbot di pojok kanan bawah ("Azure AI Assistant") untuk bertanya mengenai log alarm atau meminta analisis perbaikan mesin.
+
+INFORMASI PENDUKUNG [Opsional]
+Studi Kasus Pengguna:
+Sebuah pabrik komponen otomotif mengalami masalah overheat pada mesin Milling. Tanpa VisiTrak, mesin akan terus berjalan hingga rusak total, menyebabkan downtime 2 hari. Dengan VisiTrak, AI mendeteksi vibrasi dan suhu abnormal, membunyikan alarm, menurunkan RPM otomatis 5%, dan merekomendasikan teknisi mengecek filter coolant. Downtime terhindari.
+
+Rencana Pengembangan ke Depan:
+- Mengganti data simulasi Javascript dengan API real-time dari Azure IoT Hub yang terhubung ke sensor PLC mesin fisik.
+- Menghubungkan Chatbot secara *native* ke model GPT-4 via Azure OpenAI API.
+- Implementasi model Computer Vision (YOLO) asli untuk Visual QC.
+
+Tim dan Peran:
+- Atha Khoireng AyyASUuuiii: Frontend Developer (UI/UX Design, CSS Styling, Layouting)
+- Ivan Aryasatya: Logika Sistem & Simulasi Data (JavaScript Logic, Chart Integration, AI Concept Integration)

@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - VisiTrak</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="login-body">
+    <div class="login-wrapper">
+        <div class="login-card">
+            <div class="login-header">
+                <i class="fas fa-industry"></i>
+                <h2>VisiTrak</h2>
+                <p>Silakan masuk ke akun Anda</p>
+            </div>
+            
+            <!-- Metode Login Alternatif -->
+            <div class="social-login">
+                <button class="btn btn-social" onclick="alert('Fitur Login Google sedang dalam tahap pengembangan API.')">
+                    <i class="fab fa-google" style="color: #ea4335;"></i> Lanjutkan dengan Google
+                </button>
+                <button class="btn btn-social" onclick="alert('Fitur Login Microsoft/SSO sedang dalam tahap pengembangan API.')">
+                    <i class="fab fa-microsoft" style="color: #00a4ef;"></i> Lanjutkan dengan Microsoft
+                </button>
+            </div>
+            
+            <div class="login-divider">
+                <span>ATAU LOGIN DENGAN EMAIL</span>
+            </div>
+            
+            <!-- Form Login Password -->
+            <form id="login-form" onsubmit="handleLogin(event)">
+                <div class="form-group">
+                    <label for="username">Email atau Username</label>
+                    <input type="text" id="username" placeholder="Masukkan email/username" required>
+                </div>
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <input type="password" id="password" placeholder="Masukkan password" required>
+                </div>
+                <button type="submit" class="btn-primary-full">Masuk ke Dashboard</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Logika Autentikasi Sederhana -->
+    <script>
+        // Cek jika sudah login sebelumnya, langsung arahkan ke dashboard
+        if (sessionStorage.getItem('isLoggedIn') === 'true') {
+            window.location.href = 'index.html';
+        }
+
+        function handleLogin(event) {
+            event.preventDefault(); // Mencegah form memuat ulang halaman
+            const passwordInput = document.getElementById('password').value;
+            
+            if (passwordInput === 'ivanganteng') {
+                // Simpan status login ke session storage browser
+                sessionStorage.setItem('isLoggedIn', 'true');
+                // Redirect ke dashboard utama
+                window.location.href = 'index.html';
+            } else {
+                alert('Login gagal! Email/Username atau Password salah.');
+            }
+        }
+    </script>
+</body>
+</html>

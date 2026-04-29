@@ -34,6 +34,16 @@ body {
     color: white;
     padding: 20px 0;
     overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    position: sticky;
+    top: 0;
+    transition: margin-left 0.3s ease;
+}
+
+.sidebar.collapsed {
+    margin-left: -250px;
 }
 
 .logo {
@@ -48,6 +58,7 @@ body {
 .nav-links {
     list-style: none;
     margin-top: 20px;
+    flex: 1;
 }
 
 .nav-links li {
@@ -61,6 +72,34 @@ body {
 
 .nav-links li:hover, .nav-links li.active {
     background-color: var(--primary);
+}
+
+/* Sidebar Profile */
+.sidebar-profile {
+    margin-top: auto;
+    padding: 15px 20px;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    border-top: 1px solid #334155;
+    cursor: pointer;
+    transition: background 0.3s;
+}
+
+.sidebar-profile:hover {
+    background-color: #334155;
+}
+
+.profile-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+}
+
+.profile-info h4 { font-size: 0.95rem; margin-bottom: 3px; }
+.profile-info p {
+    font-size: 0.8rem;
+    color: var(--text-light);
 }
 
 /* Main Content */
@@ -437,7 +476,6 @@ th {
 
 /* --- Responsive Mobile & Sidebar Toggle --- */
 #sidebar-toggle {
-    display: none;
 }
 
 #sidebar-overlay {
@@ -452,15 +490,12 @@ th {
 }
 
 @media (max-width: 768px) {
-    #sidebar-toggle {
-        display: block;
-    }
-
     .sidebar {
         position: fixed;
         left: -250px; /* Sembunyikan ke kiri */
         top: 0;
         height: 100vh;
+        margin-left: 0 !important; /* Mencegah bentrok dengan class collapsed di desktop */
         z-index: 100;
         transition: left 0.3s ease;
     }
@@ -496,3 +531,132 @@ th {
         width: calc(100% - 40px); /* Paskan pada layar HP */
     }
 }
+
+/* Modal User Profile */
+.modal-overlay {
+    display: none;
+    position: fixed;
+    top: 0; left: 0;
+    width: 100vw; height: 100vh;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 2000;
+    align-items: center;
+    justify-content: center;
+}
+
+.modal-overlay.active {
+    display: flex;
+}
+
+.modal-content {
+    background: var(--card-bg);
+    width: 90%;
+    max-width: 400px;
+    border-radius: 10px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+    overflow: hidden;
+    animation: fadeIn 0.3s ease-in-out;
+    color: var(--text-main);
+}
+
+.modal-header {
+    background: var(--primary);
+    color: white;
+    padding: 15px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.close-modal {
+    font-size: 1.5rem;
+    cursor: pointer;
+}
+
+.modal-body { padding: 20px; }
+.profile-avatar-large { display: block; margin: 0 auto 20px auto; border-radius: 50%; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+.profile-detail-group { margin-bottom: 15px; border-bottom: 1px solid #e2e8f0; padding-bottom: 10px; }
+.profile-detail-group:last-child { border-bottom: none; }
+.profile-detail-group label { font-size: 0.85rem; color: var(--text-light); display: block; margin-bottom: 5px; }
+.profile-detail-group p { font-size: 1rem; font-weight: 500; }
+
+/* --- Login Page Styles --- */
+.login-body {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    background: linear-gradient(135deg, var(--sidebar-bg) 0%, var(--primary) 100%);
+}
+
+.login-wrapper {
+    width: 100%;
+    max-width: 420px;
+    padding: 20px;
+}
+
+.login-card {
+    background: var(--card-bg);
+    border-radius: 12px;
+    padding: 40px 30px;
+    box-shadow: 0 15px 35px rgba(0,0,0,0.2);
+}
+
+.login-header {
+    text-align: center;
+    margin-bottom: 30px;
+}
+
+.login-header i { font-size: 3rem; color: var(--primary); margin-bottom: 10px; }
+.login-header h2 { color: var(--text-main); font-size: 1.8rem; }
+.login-header p { color: var(--text-light); margin-top: 5px; font-size: 0.9rem; }
+
+.btn-social {
+    width: 100%;
+    background: white;
+    color: var(--text-main);
+    border: 1px solid #e2e8f0;
+    padding: 12px;
+    margin-bottom: 15px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    font-weight: 600;
+    transition: 0.3s;
+}
+
+.btn-social:hover {
+    background: #f8fafc;
+    border-color: #cbd5e1;
+}
+
+.login-divider {
+    display: flex;
+    align-items: center;
+    text-align: center;
+    margin: 20px 0;
+    color: var(--text-light);
+    font-size: 0.8rem;
+    font-weight: bold;
+}
+
+.login-divider::before, .login-divider::after {
+    content: '';
+    flex: 1;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+.login-divider span { padding: 0 10px; }
+.login-card .form-group { margin-bottom: 20px; }
+.login-card label { display: block; margin-bottom: 8px; color: var(--text-main); font-weight: 500; font-size: 0.9rem; }
+.login-card input {
+    width: 100%; padding: 12px; border: 1px solid #e2e8f0; border-radius: 6px; outline: none; transition: 0.3s;
+}
+.login-card input:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1); }
+
+.btn-primary-full {
+    width: 100%; background: var(--primary); color: white; padding: 12px; font-size: 1rem;
+    border: none; border-radius: 6px; cursor: pointer; font-weight: bold; transition: 0.3s;
+}
+.btn-primary-full:hover { background: #1d4ed8; }
