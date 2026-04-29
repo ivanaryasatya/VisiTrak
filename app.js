@@ -110,8 +110,21 @@ document.addEventListener("DOMContentLoaded", () => {
         db.collection('users').doc(userUid).onSnapshot((doc) => {
             if (doc.exists && doc.data().forceLogout === true) {
                 db.collection('users').doc(userUid).update({ forceLogout: false, isOnline: false }).then(() => {
-                    alert("Sesi Anda telah dihentikan oleh Administrator.");
-                    logoutUserAction();
+                    // Tutup layar dengan overlay agar dashboard tidak bisa diakses lagi
+                    const kickOverlay = document.createElement('div');
+                    kickOverlay.style.cssText = "position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(15, 23, 42, 0.95); z-index: 99999; display: flex; flex-direction: column; align-items: center; justify-content: center; color: white; text-align: center; padding: 20px;";
+                    kickOverlay.innerHTML = `
+                        <i class="fas fa-sign-out-alt" style="color: #ef4444; font-size: 5rem; margin-bottom: 20px; animation: fadeIn 0.5s ease-in-out;"></i>
+                        <h1 style="font-size: 2.2rem; margin-bottom: 10px;">Sesi Dihentikan</h1>
+                        <p style="font-size: 1.1rem; color: #cbd5e1;">Anda telah dikeluarkan (Kick) secara paksa oleh Administrator.</p>
+                        <p style="margin-top: 30px; font-size: 0.9rem; color: #94a3b8;"><i class="fas fa-circle-notch fa-spin"></i> Mengalihkan ke halaman login secara otomatis...</p>
+                    `;
+                    document.body.appendChild(kickOverlay);
+                    
+                    // Logout dan redirect otomatis tanpa menunggu klik user
+                    setTimeout(() => {
+                        logoutUserAction();
+                    }, 3000);
                 });
             }
         });
