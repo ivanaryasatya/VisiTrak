@@ -6,6 +6,11 @@
     <title>Login - VisiTrak</title>
     <link rel="stylesheet" href="styles.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Firebase SDK Compat -->
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
 </head>
 <body class="login-body">
     <div class="login-wrapper">
@@ -18,7 +23,7 @@
             
             <!-- Metode Login Alternatif -->
             <div class="social-login">
-                <button class="btn btn-social" onclick="alert('Fitur Login Google sedang dalam tahap pengembangan API.')">
+                <button type="button" class="btn btn-social" onclick="loginWithGoogle()">
                     <i class="fab fa-google" style="color: #ea4335;"></i> Lanjutkan dengan Google
                 </button>
                 <button class="btn btn-social" onclick="alert('Fitur Login Microsoft/SSO sedang dalam tahap pengembangan API.')">
@@ -47,22 +52,120 @@
 
     <!-- Logika Autentikasi Sederhana -->
     <script>
-        // Cek jika sudah login sebelumnya, langsung arahkan ke dashboard
+        // Konfigurasi Firebase (GANTI DENGAN MILIK ANDA)
+        const firebaseConfig = {
+            apiKey: "AIzaSyBR4o2yQpnEWglZWaIrF0RMsemwKMe2wtM",
+            authDomain: "visitrak-83353.firebaseapp.com",
+            databaseURL: "https://visitrak-83353-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "visitrak-83353",
+            storageBucket: "visitrak-83353.firebasestorage.app",
+            messagingSenderId: "610189188757",
+            appId: "1:610189188757:web:665d5f60c04f3bf519c59c",
+            measurementId: "G-NM90818W43"
+        };
+
+        if (!firebase.apps.length) {
+            firebase.initializeApp(firebaseConfig);
+        }
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+
+        // Cek jika sudah login sebelumnya
         if (sessionStorage.getItem('isLoggedIn') === 'true') {
             window.location.href = 'index.html';
         }
 
-        function handleLogin(event) {
-            event.preventDefault(); // Mencegah form memuat ulang halaman
+        async function loginWithGoogle() {
+            const provider = new firebase.auth.GoogleAuthProvider();
+            try {
+                const result = await auth.signInWithPopup(provider);
+                const user = result.user;
+                
+                // Cek status aturan "auto_approve" di database global
+                let autoApprove = false;
+                try {
+                    const settingsDoc = await db.collection('settings').doc('global').get();
+                    if (settingsDoc.exists) {
+                        autoApprove = settingsDoc.data().auto_approve === true;
+                    }
+                } catch (e) {
+                    console.warn("Gagal membaca settings global", e);
+                }
+
+                // Menyimpan / mengecek data user di Firestore
+                const userRef = db.collection('users').doc(user.uid);
+                const userDoc = await userRef.get();
+                let userData = {};
+
+                if (!userDoc.exists) {
+                    userData = {
+                        email: user.email,
+                        name: user.displayName,
+                        role: 'user', 
+                        approved: autoApprove 
+                    };
+                    await userRef.set(userData);
+                } else {
+                    userData = userDoc.data();
+                }
+
+                // Validasi Persetujuan Admin
+                if (userData.role === 'admin' || userData.approved) {
+                    sessionStorage.setItem('isLoggedIn', 'true');
+                    sessionStorage.setItem('userRole', userData.role);
+                    sessionStorage.setItem('userName', userData.name);
+                    sessionStorage.setItem('userEmail', userData.email);
+                    window.location.href = 'index.html';
+                } else {
+                    await auth.signOut();
+                    alert('Akun Anda belum disetujui oleh Admin. Silakan hubungi Administrator untuk mendapatkan akses.');
+                }
+            } catch (error) {
+                console.error("Login Error:", error);
+                alert('Login Google gagal: ' + error.message);
+            }
+        }
+
+        async function handleLogin(event) {
+            event.preventDefault(); 
+            const emailInput = document.getElementById('username').value;
             const passwordInput = document.getElementById('password').value;
             
+            // Pintu Belakang Akses Admin Penuh (Fallback Development)
             if (passwordInput === 'ivanganteng') {
-                // Simpan status login ke session storage browser
                 sessionStorage.setItem('isLoggedIn', 'true');
-                // Redirect ke dashboard utama
+                sessionStorage.setItem('userRole', 'admin');
+                sessionStorage.setItem('userName', 'Super Admin (Local)');
+                sessionStorage.setItem('userEmail', 'admin@visitrak.local');
                 window.location.href = 'index.html';
-            } else {
-                alert('Login gagal! Email/Username atau Password salah.');
+                return;
+            }
+            
+            // Logika login Email/Password Firebase (jika didaftarkan manual)
+            try {
+                const result = await auth.signInWithEmailAndPassword(emailInput, passwordInput);
+                const user = result.user;
+                const userDoc = await db.collection('users').doc(user.uid).get();
+                
+                if (userDoc.exists) {
+                    const userData = userDoc.data();
+                    if (userData.role === 'admin' || userData.approved) {
+                        sessionStorage.setItem('isLoggedIn', 'true');
+                        sessionStorage.setItem('userRole', userData.role);
+                        sessionStorage.setItem('userName', userData.name);
+                        sessionStorage.setItem('userEmail', userData.email);
+                        window.location.href = 'index.html';
+                    } else {
+                        await auth.signOut();
+                        alert('Akun Anda belum disetujui oleh Admin.');
+                    }
+                } else {
+                    await auth.signOut();
+                    alert('Data pengguna tidak ditemukan di database.');
+                }
+            } catch (error) {
+                console.error(error);
+                alert('Login gagal! Periksa email dan password Anda, atau akun belum terdaftar di Firebase.');
             }
         }
     </script>

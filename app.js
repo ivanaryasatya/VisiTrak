@@ -1,3 +1,21 @@
+// --- Inisialisasi Firebase ---
+const firebaseConfig = {
+    apiKey: "AIzaSyBR4o2yQpnEWglZWaIrF0RMsemwKMe2wtM",
+    authDomain: "visitrak-83353.firebaseapp.com",
+    databaseURL: "https://visitrak-83353-default-rtdb.asia-southeast1.firebasedatabase.app",
+    projectId: "visitrak-83353",
+    storageBucket: "visitrak-83353.firebasestorage.app",
+    messagingSenderId: "610189188757",
+    appId: "1:610189188757:web:665d5f60c04f3bf519c59c",
+    measurementId: "G-NM90818W43"
+  };
+
+if (typeof firebase !== 'undefined' && !firebase.apps.length) {
+    firebase.initializeApp(firebaseConfig);
+}
+const auth = typeof firebase !== 'undefined' ? firebase.auth() : null;
+const db = typeof firebase !== 'undefined' ? firebase.firestore() : null;
+
 // --- Keamanan Akses (Route Guard) Sederhana ---
 if (sessionStorage.getItem('isLoggedIn') !== 'true') {
     window.location.href = 'login.html'; // Tendang kembali ke halaman login jika belum masuk
@@ -16,6 +34,69 @@ document.addEventListener("DOMContentLoaded", () => {
             sendMessage();
         }
     });
+
+    // --- Pengaturan Profil & Role Berdasarkan Data Login ---
+    const userRole = sessionStorage.getItem('userRole');
+    const userName = sessionStorage.getItem('userName');
+    const userEmail = sessionStorage.getItem('userEmail');
+
+    if (userName) {
+        document.querySelectorAll('.profile-info h4').forEach(el => el.innerText = userName);
+        const nameGroups = document.querySelectorAll('.profile-detail-group:nth-child(2) p, .profile-detail-group:nth-child(1) p');
+        if (nameGroups.length > 0) nameGroups[0].innerText = userName;
+        
+        // Otomatis men-generate Avatar berdasarkan Inisial Akun Google
+        const avatarUrl = `https://ui-avatars.com/api/?name=${encodeURIComponent(userName)}&background=2563eb&color=fff`;
+        const avatarSmall = document.querySelector('.profile-avatar');
+        if(avatarSmall) avatarSmall.src = avatarUrl;
+        const avatarLarge = document.querySelector('.profile-avatar-large');
+        if(avatarLarge) avatarLarge.src = avatarUrl + '&size=128';
+        
+        const nameInput = document.querySelector('#view-pengaturan input[type="text"]');
+        if(nameInput) nameInput.value = userName;
+    }
+
+    if (userEmail) {
+        const emailGroups = document.querySelectorAll('.profile-detail-group');
+        emailGroups.forEach(group => {
+            if (group.querySelector('label') && group.querySelector('label').innerText === 'Email') {
+                group.querySelector('p').innerText = userEmail;
+            }
+        });
+    }
+
+    if (userRole) {
+        const roleText = userRole === 'admin' ? 'Administrator Super' : 'Operator / User';
+        document.querySelectorAll('.profile-info p').forEach(el => el.innerText = roleText);
+        
+        const roleGroups = document.querySelectorAll('.profile-detail-group');
+        roleGroups.forEach(group => {
+            if (group.querySelector('label') && group.querySelector('label').innerText.includes('Role')) {
+                group.querySelector('p').innerText = roleText;
+            }
+        });
+        
+        const roleSelect = document.querySelector('#view-pengaturan select');
+        if(roleSelect) roleSelect.value = roleText;
+
+        // Sembunyikan menu sensitif jika diakses oleh user biasa (Bukan admin)
+        if (userRole !== 'admin') {
+            const adminMenus = [
+                document.querySelector('.nav-links li[onclick*="view-ai"]'),
+                document.querySelector('.nav-links li[onclick*="view-pengaturan"]')
+            ];
+            adminMenus.forEach(menu => {
+                if(menu) menu.style.display = 'none';
+            });
+        } else {
+            // Render & Tampilkan Panel Administrator khusus untuk Admin
+            const adminPanel = document.getElementById('admin-panel');
+            if (adminPanel) {
+                adminPanel.style.display = 'block';
+                loadAdminData();
+            }
+        }
+    }
 });
 
 // --- Logika Toggle Sidebar (Mobile) ---
@@ -400,7 +481,115 @@ function resetMachineSettings() {
 // --- Logika Keluar (Logout) ---
 function logout() {
     if (confirm("Apakah Anda yakin ingin keluar dari VisiTrak?")) {
-        sessionStorage.removeItem('isLoggedIn');
-        window.location.href = 'login.html';
+        if (auth) {
+            auth.signOut().then(() => {
+                sessionStorage.clear();
+                window.location.href = 'login.html';
+            }).catch(() => {
+                sessionStorage.clear();
+                window.location.href = 'login.html';
+            });
+        } else {
+            sessionStorage.clear();
+            window.location.href = 'login.html';
+        }
     }
 }
+
+// --- Logika Panel Administrator (Firebase) ---
+async function loadAdminData() {
+    if (!db) return;
+    try {
+        // Ambil pengaturan auto-approve global
+        const settingsDoc = await db.collection('settings').doc('global').get();
+        const btnToggle = document.getElementById('btn-toggle-auto-approve');
+        if (settingsDoc.exists && settingsDoc.data().auto_approve) {
+            btnToggle.classList.replace('btn-stop', 'btn-start');
+            btnToggle.innerText = 'AKTIF';
+        } else {
+            if (!settingsDoc.exists) {
+                await db.collection('settings').doc('global').set({ auto_approve: false });
+            }
+        }
+
+        // Loop semua data pengguna dan muat di tabel
+        const usersSnapshot = await db.collection('users').get();
+        const tbody = document.querySelector('#users-table tbody');
+        if(tbody) tbody.innerHTML = '';
+        
+        usersSnapshot.forEach(doc => {
+            const data = doc.data();
+            const tr = document.createElement('tr');
+            
+            const approvedBadge = data.approved 
+                ? `<span class="badge badge-success">Disetujui</span>` 
+                : `<span class="badge badge-warning">Menunggu</span>`;
+                
+            const actionBtn = data.approved
+                ? `<button class="btn btn-warning" style="padding: 5px 10px; font-size: 0.8rem;" onclick="updateUserStatus('${doc.id}', false)">Cabut Akses</button>`
+                : `<button class="btn btn-start" style="padding: 5px 10px; font-size: 0.8rem;" onclick="updateUserStatus('${doc.id}', true)">Setujui</button>`;
+                
+            const adminBtn = data.role === 'admin'
+                ? ``
+                : `<button class="btn btn-auto" style="padding: 5px 10px; font-size: 0.8rem; margin-left: 5px;" onclick="updateUserRole('${doc.id}', 'admin')">Jadikan Admin</button>`;
+
+            tr.innerHTML = `
+                <td>${data.name || 'N/A'}</td>
+                <td>${data.email || 'N/A'}</td>
+                <td><span class="badge ${data.role === 'admin' ? 'badge-primary' : 'badge-light'}" style="${data.role === 'admin' ? 'background:#e0e7ff; color:#3730a3;' : 'background:#f1f5f9; color:#64748b;'}">${data.role || 'user'}</span></td>
+                <td>${approvedBadge}</td>
+                <td>
+                    ${data.role !== 'admin' ? actionBtn : '<i>Akses Penuh</i>'}
+                    ${data.role !== 'admin' ? adminBtn : ''}
+                </td>
+            `;
+            if(tbody) tbody.appendChild(tr);
+        });
+    } catch (e) {
+        console.error("Gagal memuat data admin dari Firebase:", e);
+    }
+}
+
+window.toggleAutoApprove = async function() {
+    if (!db) return;
+    const btnToggle = document.getElementById('btn-toggle-auto-approve');
+    const isActive = btnToggle.innerText === 'AKTIF';
+    
+    try {
+        await db.collection('settings').doc('global').set({ auto_approve: !isActive }, { merge: true });
+        if (!isActive) {
+            btnToggle.classList.replace('btn-stop', 'btn-start');
+            btnToggle.innerText = 'AKTIF';
+        } else {
+            btnToggle.classList.replace('btn-start', 'btn-stop');
+            btnToggle.innerText = 'TIDAK AKTIF';
+        }
+        alert(`Auto-approve berhasil diubah menjadi: ${!isActive ? 'AKTIF' : 'TIDAK AKTIF'}`);
+    } catch (e) {
+        alert("Gagal mengubah pengaturan! Pastikan Anda memiliki hak akses.");
+    }
+};
+
+window.updateUserStatus = async function(userId, isApproved) {
+    if (!db) return;
+    if (confirm(`Yakin ingin ${isApproved ? 'menyetujui' : 'mencabut akses'} pengguna ini?`)) {
+        try {
+            await db.collection('users').doc(userId).update({ approved: isApproved });
+            loadAdminData(); // Refresh UI Table
+        } catch (e) {
+            alert("Gagal memperbarui status pengguna.");
+        }
+    }
+};
+
+window.updateUserRole = async function(userId, newRole) {
+    if (!db) return;
+    if (confirm(`Yakin ingin menjadikan pengguna ini sebagai ${newRole}? Mereka akan mendapatkan akses menu penuh.`)) {
+        try {
+            await db.collection('users').doc(userId).update({ role: newRole, approved: true });
+            loadAdminData();
+        } catch (e) {
+            alert("Gagal memperbarui role pengguna.");
+        }
+    }
+};
