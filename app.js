@@ -3,6 +3,7 @@ if (sessionStorage.getItem('isLoggedIn') !== 'true') {
     window.location.href = 'login.html'; // Tendang kembali ke halaman login jika belum masuk
 }
 
+
 document.addEventListener("DOMContentLoaded", () => {
     initChart();
     initEnergyChart();
@@ -566,18 +567,6 @@ async function loadAdminData() {
             }
         }
 
-        const btnToggleDemo = document.getElementById('btn-toggle-demo-mode');
-        if (btnToggleDemo) {
-            if (settingsDoc.exists && settingsDoc.data().allow_demo) {
-                btnToggleDemo.classList.replace('btn-stop', 'btn-start');
-                btnToggleDemo.innerText = 'AKTIF';
-            } else {
-                if (!settingsDoc.exists) {
-                    await db.collection('settings').doc('global').set({ allow_demo: false }, { merge: true });
-                }
-            }
-        }
-
         // Gunakan onSnapshot agar tabel merespons perubahan secara real-time
         if (!window.usersListenerUnsubscribe) {
             window.usersListenerUnsubscribe = db.collection('users').onSnapshot(usersSnapshot => {
@@ -643,26 +632,6 @@ window.toggleAutoApprove = async function () {
             btnToggle.innerText = 'TIDAK AKTIF';
         }
         alert(`Auto-approve berhasil diubah menjadi: ${!isActive ? 'AKTIF' : 'TIDAK AKTIF'}`);
-    } catch (e) {
-        alert("Gagal mengubah pengaturan! Pastikan Anda memiliki hak akses.");
-    }
-};
-
-window.toggleDemoMode = async function () {
-    if (!db) return;
-    const btnToggle = document.getElementById('btn-toggle-demo-mode');
-    const isActive = btnToggle.innerText === 'AKTIF';
-
-    try {
-        await db.collection('settings').doc('global').set({ allow_demo: !isActive }, { merge: true });
-        if (!isActive) {
-            btnToggle.classList.replace('btn-stop', 'btn-start');
-            btnToggle.innerText = 'AKTIF';
-        } else {
-            btnToggle.classList.replace('btn-start', 'btn-stop');
-            btnToggle.innerText = 'TIDAK AKTIF';
-        }
-        alert(`Mode Demo berhasil diubah menjadi: ${!isActive ? 'AKTIF' : 'TIDAK AKTIF'}`);
     } catch (e) {
         alert("Gagal mengubah pengaturan! Pastikan Anda memiliki hak akses.");
     }

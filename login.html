@@ -82,24 +82,6 @@
                         <i class="fas fa-sign-in-alt"></i> Masuk ke Dashboard
                     </button>
                 </form>
-
-                <!-- Demo Access for Testers -->
-                <div id="demo-access-section" style="margin-top: 20px; padding: 15px; border: 2px dashed rgba(6,182,212,0.4); border-radius: 10px; background: rgba(6,182,212,0.05); display: none;">
-                    <p style="font-size: 0.8rem; color: var(--text-light, #94a3b8); margin-bottom: 10px; text-align: center;">
-                        <i class="fas fa-flask"></i> <strong>Mode Demo / Tester</strong> — Akses langsung tanpa registrasi
-                    </p>
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
-                        <button type="button" class="btn-primary-full" onclick="loginDemo('admin')" style="font-size: 0.85rem; padding: 10px; background: linear-gradient(135deg, #06b6d4, #0891b2);">
-                            <i class="fas fa-user-shield"></i> Demo Admin
-                        </button>
-                        <button type="button" class="btn-primary-full" onclick="loginDemo('operator')" style="font-size: 0.85rem; padding: 10px; background: linear-gradient(135deg, #8b5cf6, #7c3aed);">
-                            <i class="fas fa-user-cog"></i> Demo Operator
-                        </button>
-                    </div>
-                    <p style="font-size: 0.72rem; color: var(--text-light, #94a3b8); margin-top: 8px; text-align: center; opacity: 0.7;">
-                        admin@demo.visitrak.com / operator@demo.visitrak.com
-                    </p>
-                </div>
             </div>
 
             <!-- ====== TAB: REGISTER ====== -->
@@ -262,13 +244,22 @@
             const email = document.getElementById('login-email').value.trim();
             const password = document.getElementById('login-password').value;
 
-            // Dev backdoor
-            if (password === 'gofightwin') {
+            // Hardcoded Demo Accounts
+            if (email === 'admin@demo.visitrak.com' && password === 'gofightwin') {
                 sessionStorage.setItem('isLoggedIn', 'true');
                 sessionStorage.setItem('userRole', 'admin');
-                sessionStorage.setItem('userName', 'Super Admin (Local)');
-                sessionStorage.setItem('userEmail', email || 'admin@visitrak.local');
-                sessionStorage.setItem('userUid', 'local-admin');
+                sessionStorage.setItem('userName', 'Demo Admin');
+                sessionStorage.setItem('userEmail', email);
+                sessionStorage.setItem('userUid', 'demo-admin-001');
+                window.location.href = 'index.html';
+                return;
+            }
+            if (email === 'operator@demo.visitrak.com' && password === 'gofightwin') {
+                sessionStorage.setItem('isLoggedIn', 'true');
+                sessionStorage.setItem('userRole', 'user');
+                sessionStorage.setItem('userName', 'Demo Operator');
+                sessionStorage.setItem('userEmail', email);
+                sessionStorage.setItem('userUid', 'demo-operator-001');
                 window.location.href = 'index.html';
                 return;
             }
@@ -394,58 +385,6 @@
             }
             setLoading('btn-forgot', false);
         }
-
-        // ====== DEMO LOGIN (FOR TESTERS) ======
-        async function loginDemo(role) {
-            hideMessage();
-            try {
-                const settingsDoc = await db.collection('settings').doc('global').get();
-                if (!settingsDoc.exists || !settingsDoc.data().allow_demo) {
-                    showMessage('Mode Demo sedang dinonaktifkan oleh Administrator.', 'error');
-                    return;
-                }
-            } catch (e) {
-                console.error("Gagal memeriksa status demo:", e);
-                showMessage('Terjadi kesalahan saat memeriksa izin demo.', 'error');
-                return;
-            }
-
-            const demos = {
-                admin: {
-                    role: 'admin',
-                    name: 'Demo Admin',
-                    email: 'admin@demo.visitrak.com',
-                    uid: 'demo-admin-001'
-                },
-                operator: {
-                    role: 'user',
-                    name: 'Demo Operator',
-                    email: 'operator@demo.visitrak.com',
-                    uid: 'demo-operator-001'
-                }
-            };
-            const d = demos[role];
-            sessionStorage.setItem('isLoggedIn', 'true');
-            sessionStorage.setItem('userRole', d.role);
-            sessionStorage.setItem('userName', d.name);
-            sessionStorage.setItem('userEmail', d.email);
-            sessionStorage.setItem('userUid', d.uid);
-            window.location.href = 'index.html';
-        }
-
-        // Initialize display of demo section based on Firebase settings
-        document.addEventListener('DOMContentLoaded', () => {
-            if (typeof db !== 'undefined') {
-                db.collection('settings').doc('global').onSnapshot(doc => {
-                    const demoSection = document.getElementById('demo-access-section');
-                    if (doc.exists && doc.data().allow_demo) {
-                        demoSection.style.display = 'block';
-                    } else {
-                        demoSection.style.display = 'none';
-                    }
-                });
-            }
-        });
     </script>
 </body>
 </html>
