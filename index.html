@@ -45,7 +45,7 @@
                 <li onclick="switchSidebarView(event, 'view-alarm')"><i class="fas fa-bell"></i> Log Alarm</li>
                 <li onclick="switchSidebarView(event, 'view-chat')"><i class="fas fa-comments"></i> Chat Global</li>
                 <li onclick="switchSidebarView(event, 'view-pengaturan')"><i class="fas fa-cog"></i> Pengaturan</li>
-                <li onclick="switchSidebarView(event, 'view-qc')"><i class="fas fa-camera"></i> Visual QC</li>
+                <li onclick="switchSidebarView(event, 'view-qc')"><i class="fas fa-video"></i> AI CCTV Karyawan</li>
             </ul>
 
             <!-- Profil Sidebar -->
@@ -832,54 +832,73 @@
                 </div>
             </div>
 
-            <!-- Sidebar Content: Visual QC -->
+            <!-- Sidebar Content: AI CCTV Karyawan -->
             <div id="view-qc" class="sidebar-view">
                 <div class="view-header"
                     style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-                    <h2><i class="fas fa-camera"></i> Computer Vision Quality Control</h2>
+                    <h2><i class="fas fa-video"></i> AI CCTV Karyawan</h2>
                     <span class="badge badge-success" style="font-size: 0.9em;"><i class="fas fa-circle"
-                            style="color: #ef4444; animation: blink 1s infinite;"></i> Live Feed Active</span>
+                            style="color: #ef4444; animation: blink 1s infinite;"></i> Live Monitoring Active</span>
                 </div>
 
                 <div class="middle-section" style="grid-template-columns: 2fr 1fr;">
                     <div class="card"
                         style="position: relative; background: #000; padding: 0; overflow: hidden; height: 400px; display: flex; align-items: center; justify-content: center;">
                         <div style="color: #fff; opacity: 0.5; position: absolute; top: 10px; left: 10px; z-index: 10;">
-                            CAM-01 / LINE-A / 30FPS</div>
-                        <!-- Mock Video Background -->
-                        <div class="qc-video-mock"></div>
-                        <!-- Mock Bounding Box -->
-                        <div class="qc-bounding-box">
-                            <span class="qc-label">Goresan 89%</span>
-                        </div>
-                        <div class="qc-bounding-box good" style="top: 20%; left: 60%; border-color: #10b981;">
-                            <span class="qc-label" style="background: #10b981;">Normal 98%</span>
+                            CCTV-04 / AREA-PRODUKSI / 30FPS</div>
+                        
+                        <!-- Real Video Feed -->
+                        <video id="cctv-video" autoplay playsinline style="width: 100%; height: 100%; object-fit: cover; position: absolute; top: 0; left: 0; display: none; z-index: 1; transform: scaleX(-1);"></video>
+                        
+                        <!-- Mock Video Background (shown before camera starts) -->
+                        <div id="cctv-mock-bg" class="qc-video-mock" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 2;"></div>
+                        
+                        <!-- Toggle Camera Button -->
+                        <button id="btn-toggle-camera" onclick="toggleCamera()" style="position: absolute; top: 15px; right: 15px; z-index: 20; padding: 8px 15px; font-size: 0.9rem; font-weight: bold; border-radius: 8px; cursor: pointer; background: #2563eb; color: white; border: none; box-shadow: 0 4px 10px rgba(0,0,0,0.5); transition: 0.3s;"><i class="fas fa-video"></i> <span>Aktifkan Kamera</span></button>
+
+                        <!-- Mock Bounding Boxes (z-index adjusted to be above video) -->
+                        <div id="cctv-boxes" style="display: none; width: 100%; height: 100%; position: absolute; top: 0; left: 0; z-index: 15;">
+                            <div class="qc-bounding-box" style="top: 30%; left: 20%; width: 120px; height: 180px; border-color: #10b981; animation-delay: 0.5s;">
+                                <span class="qc-label" style="background: #10b981;">Budi S. - Bekerja 95%</span>
+                            </div>
+                            <div class="qc-bounding-box" style="top: 40%; left: 70%; width: 100px; height: 150px; border-color: #ef4444; animation-delay: 1.2s;">
+                                <span class="qc-label" style="background: #ef4444;">Agus - Main HP 88%</span>
+                            </div>
+                            <div class="qc-bounding-box" style="top: 25%; left: 45%; width: 110px; height: 160px; border-color: #f59e0b; animation-delay: 0.1s;">
+                                <span class="qc-label" style="background: #f59e0b;">Siti - Istirahat 92%</span>
+                            </div>
                         </div>
                     </div>
 
                     <div>
                         <div class="card" style="margin-bottom: 20px;">
-                            <h3>Status Inspeksi Live</h3>
+                            <h3>Statistik Aktivitas Live</h3>
                             <div style="margin-top: 15px;">
-                                <p style="font-size: 1.2rem;">Total Diperiksa: <strong id="qc-total">1,245</strong></p>
-                                <p style="font-size: 1.2rem; color: var(--success); margin-top: 10px;">Lolos (Good):
-                                    <strong id="qc-good">1,230</strong></p>
-                                <p style="font-size: 1.2rem; color: var(--danger); margin-top: 10px;">Cacat (Defect):
-                                    <strong id="qc-defect">15</strong></p>
+                                <p style="font-size: 1.2rem;">Karyawan Terdeteksi: <strong id="cctv-total">14</strong></p>
+                                <p style="font-size: 1.2rem; color: var(--success); margin-top: 10px;"><i class="fas fa-briefcase"></i> Bekerja:
+                                    <strong id="cctv-work">11</strong></p>
+                                <p style="font-size: 1.2rem; color: var(--warning); margin-top: 10px;"><i class="fas fa-coffee"></i> Istirahat:
+                                    <strong id="cctv-rest">2</strong></p>
+                                <p style="font-size: 1.2rem; color: var(--danger); margin-top: 10px;"><i class="fas fa-mobile-alt"></i> Main Handphone:
+                                    <strong id="cctv-phone">1</strong></p>
                             </div>
                         </div>
 
                         <div class="card">
-                            <h3>Distribusi Cacat</h3>
-                            <ul style="list-style: none; margin-top: 10px; color: var(--text-light);">
-                                <li style="margin-bottom: 5px; padding-bottom: 5px; border-bottom: 1px solid #e2e8f0;">
-                                    Goresan Permukaan <span
-                                        style="float: right; color: var(--text-main); font-weight: bold;">8</span></li>
-                                <li style="margin-bottom: 5px; padding-bottom: 5px; border-bottom: 1px solid #e2e8f0;">
-                                    Dimensi Tidak Pas <span
-                                        style="float: right; color: var(--text-main); font-weight: bold;">5</span></li>
-                                <li style="margin-bottom: 5px;">Warna Pudar <span
-                                        style="float: right; color: var(--text-main); font-weight: bold;">2</span></li>
+                            <h3>Log Deteksi Pelanggaran</h3>
+                            <ul style="list-style: none; margin-top: 10px; color: var(--text-light); max-height: 150px; overflow-y: auto;">
+                                <li style="margin-bottom: 5px; padding-bottom: 5px; border-bottom: 1px solid #e2e8f0; font-size: 0.85rem;">
+                                    <strong style="color: var(--text-main);">Agus T.</strong> - Main HP <br>
+                                    <span style="font-size: 0.75rem;"><i class="far fa-clock"></i> 10:12 AM - Area Produksi</span>
+                                </li>
+                                <li style="margin-bottom: 5px; padding-bottom: 5px; border-bottom: 1px solid #e2e8f0; font-size: 0.85rem;">
+                                    <strong style="color: var(--text-main);">Rendi W.</strong> - Tidak Pakai Helm <br>
+                                    <span style="font-size: 0.75rem;"><i class="far fa-clock"></i> 09:45 AM - Gudang B</span>
+                                </li>
+                                <li style="margin-bottom: 5px; font-size: 0.85rem;">
+                                    <strong style="color: var(--text-main);">Dimas A.</strong> - Merokok di area dilarang <br>
+                                    <span style="font-size: 0.75rem;"><i class="far fa-clock"></i> 08:30 AM - Area Loading</span>
+                                </li>
                             </ul>
                         </div>
                     </div>

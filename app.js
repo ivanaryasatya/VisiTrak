@@ -707,7 +707,7 @@ function renderGlobalMessage(msgId, data, container) {
     }
 
     wrapper.innerHTML = `
-        <div style="display: flex; align-items: flex-start; gap: 4px; flex-direction: ${isOwn ? 'row-reverse' : 'row'}; max-width: 75%;">
+        <div style="display: flex; align-items: flex-start; gap: 4px; flex-direction: ${isOwn ? 'row-reverse' : 'row'}; max-width: 100%;">
             <div class="global-chat-bubble ${isOwn ? 'own' : 'other'}">
                 ${senderInfo}
                 <div class="global-chat-text">${escapeHtml(data.text)}</div>
@@ -862,6 +862,59 @@ window.updateUserRole = async function(userId, newRole) {
             loadAdminData();
         } catch (e) {
             alert("Gagal memperbarui role pengguna.");
+        }
+    }
+};
+
+// --- Logika AI CCTV Karyawan (Webcam) ---
+let cctvStream = null;
+
+window.toggleCamera = async function() {
+    const videoElement = document.getElementById('cctv-video');
+    const mockBg = document.getElementById('cctv-mock-bg');
+    const toggleBtn = document.getElementById('btn-toggle-camera');
+    const boundingBoxes = document.getElementById('cctv-boxes');
+
+    // Jika kamera sedang nyala (stream ada), matikan
+    if (cctvStream) {
+        // Hentikan semua track
+        cctvStream.getTracks().forEach(track => track.stop());
+        cctvStream = null;
+        videoElement.srcObject = null;
+        
+        // Sembunyikan video dan boks, tampilkan background bohongan
+        videoElement.style.display = 'none';
+        boundingBoxes.style.display = 'none';
+        mockBg.style.display = 'block';
+        
+        // Ubah tampilan tombol kembali ke mode aktifkan (biru)
+        toggleBtn.style.background = '#2563eb';
+        toggleBtn.innerHTML = '<i class="fas fa-video"></i> <span>Aktifkan Kamera</span>';
+    } 
+    // Jika kamera mati, nyalakan
+    else {
+        try {
+            // Minta akses kamera ke user
+            const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+            cctvStream = stream;
+            
+            // Pasang stream ke elemen video
+            videoElement.srcObject = stream;
+            videoElement.style.display = 'block';
+            
+            // Sembunyikan background bohongan
+            mockBg.style.display = 'none';
+            
+            // Tampilkan bounding boxes seolah-olah AI sedang mendeteksi
+            boundingBoxes.style.display = 'block';
+            
+            // Ubah tampilan tombol menjadi mode matikan (merah)
+            toggleBtn.style.background = '#ef4444';
+            toggleBtn.innerHTML = '<i class="fas fa-video-slash"></i> <span>Matikan Kamera</span>';
+
+        } catch (err) {
+            console.error("Gagal mengakses kamera: ", err);
+            alert("Gagal mengakses kamera laptop. Pastikan Anda telah memberikan izin akses kamera pada browser.");
         }
     }
 };
