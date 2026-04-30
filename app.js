@@ -6,21 +6,20 @@ if (sessionStorage.getItem('isLoggedIn') !== 'true') {
 document.addEventListener("DOMContentLoaded", () => {
     initChart();
     initEnergyChart();
-    
-    // Jalankan simulasi data sensor real-time
+
     startRealTimeSimulation();
-    
+
     // Enter key listener untuk chatbot
-    document.getElementById("chat-input").addEventListener("keypress", function(e) {
+    document.getElementById("chat-input").addEventListener("keypress", function (e) {
         if (e.key === "Enter") {
             sendMessage();
         }
     });
-    
+
     // Enter key listener untuk Global Chat
     const globalChatInput = document.getElementById("global-chat-input");
     if (globalChatInput) {
-        globalChatInput.addEventListener("keypress", function(e) {
+        globalChatInput.addEventListener("keypress", function (e) {
             if (e.key === "Enter") sendGlobalMessage();
         });
     }
@@ -35,16 +34,16 @@ document.addEventListener("DOMContentLoaded", () => {
         document.querySelectorAll('.profile-info h4').forEach(el => el.innerText = userName);
         const nameGroups = document.querySelectorAll('.profile-detail-group:nth-child(2) p, .profile-detail-group:nth-child(1) p');
         if (nameGroups.length > 0) nameGroups[0].innerText = userName;
-        
+
         // Otomatis men-generate Avatar berdasarkan Inisial Akun Google
         const avatarUrl = `https://ui-avatars.com/api/?name=${encodeURIComponent(userName)}&background=2563eb&color=fff`;
         const avatarSmall = document.querySelector('.profile-avatar');
-        if(avatarSmall) avatarSmall.src = avatarUrl;
+        if (avatarSmall) avatarSmall.src = avatarUrl;
         const avatarLarge = document.querySelector('.profile-avatar-large');
-        if(avatarLarge) avatarLarge.src = avatarUrl + '&size=128';
-        
+        if (avatarLarge) avatarLarge.src = avatarUrl + '&size=128';
+
         const nameInput = document.querySelector('#view-pengaturan input[type="text"]');
-        if(nameInput) nameInput.value = userName;
+        if (nameInput) nameInput.value = userName;
     }
 
     if (userEmail) {
@@ -59,16 +58,16 @@ document.addEventListener("DOMContentLoaded", () => {
     if (userRole) {
         const roleText = userRole === 'admin' ? 'Administrator Super' : 'Operator / User';
         document.querySelectorAll('.profile-info p').forEach(el => el.innerText = roleText);
-        
+
         const roleGroups = document.querySelectorAll('.profile-detail-group');
         roleGroups.forEach(group => {
             if (group.querySelector('label') && group.querySelector('label').innerText.includes('Role')) {
                 group.querySelector('p').innerText = roleText;
             }
         });
-        
+
         const roleSelect = document.querySelector('#view-pengaturan select');
-        if(roleSelect) roleSelect.value = roleText;
+        if (roleSelect) roleSelect.value = roleText;
 
         // Sembunyikan menu sensitif jika diakses oleh user biasa (Bukan admin)
         if (userRole !== 'admin') {
@@ -77,7 +76,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 document.querySelector('.nav-links li[onclick*="view-pengaturan"]')
             ];
             adminMenus.forEach(menu => {
-                if(menu) menu.style.display = 'none';
+                if (menu) menu.style.display = 'none';
             });
         } else {
             // Render & Tampilkan Panel Administrator khusus untuk Admin
@@ -87,13 +86,13 @@ document.addEventListener("DOMContentLoaded", () => {
                 loadAdminData();
                 // Mulai mendengarkan permintaan login baru secara real-time
                 listenForPendingUsers();
-                
+
                 // Tampilkan tombol Hapus Semua Chat khusus untuk Admin
                 const btnClearChat = document.getElementById('btn-clear-chat');
                 if (btnClearChat) btnClearChat.style.display = 'block';
             }
         }
-        
+
         // Inisialisasi Forum Chat Global setelah autentikasi profil
         initGlobalChat();
     }
@@ -117,7 +116,7 @@ document.addEventListener("DOMContentLoaded", () => {
                         <p style="margin-top: 30px; font-size: 0.9rem; color: #94a3b8;"><i class="fas fa-circle-notch fa-spin"></i> Mengalihkan ke halaman login secara otomatis...</p>
                     `;
                     document.body.appendChild(kickOverlay);
-                    
+
                     // Logout dan redirect otomatis tanpa menunggu klik user
                     setTimeout(() => {
                         logoutUserAction();
@@ -137,7 +136,7 @@ document.addEventListener("DOMContentLoaded", () => {
 function toggleSidebar() {
     const sidebar = document.getElementById('sidebar');
     const overlay = document.getElementById('sidebar-overlay');
-    
+
     if (window.innerWidth <= 768) {
         sidebar.classList.toggle('active');
         overlay.classList.toggle('active');
@@ -188,7 +187,7 @@ function switchSidebarView(evt, viewId) {
         pageTitle.innerText = "3D Industrial Parts Viewer";
         setTimeout(() => initSTLViewer(), 100);
     }
-    
+
     // Tutup otomatis sidebar di mobile setelah mengklik menu
     if (window.innerWidth <= 768) {
         document.getElementById('sidebar').classList.remove('active');
@@ -218,7 +217,7 @@ function openTab(evt, tabId) {
 // --- Inisialisasi Grafik (Chart.js) ---
 function initChart() {
     const ctx = document.getElementById('monitoringChart').getContext('2d');
-    
+
     new Chart(ctx, {
         type: 'line',
         data: {
@@ -275,7 +274,7 @@ function initEnergyChart() {
     const canvas = document.getElementById('energyChart');
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
-    
+
     new Chart(ctx, {
         type: 'bar',
         data: {
@@ -304,7 +303,7 @@ function toggleMachine(machineId) {
 function toggleChat() {
     const body = document.getElementById('chat-body');
     const icon = document.getElementById('chat-toggle-icon');
-    
+
     if (body.classList.contains('active')) {
         body.classList.remove('active');
         icon.classList.replace('fa-chevron-down', 'fa-chevron-up');
@@ -317,7 +316,7 @@ function toggleChat() {
 async function sendMessage() {
     const input = document.getElementById('chat-input');
     const messageText = input.value.trim();
-    
+
     if (messageText === "") return;
 
     // 1. Tambahkan pesan user ke UI
@@ -330,11 +329,11 @@ async function sendMessage() {
 
     // 2. Konfigurasi Azure OpenAI
     // PENTING: Ganti nilai-nilai di bawah ini dengan kredensial Azure Anda!
-    const azureEndpoint = "https://RESOURCE-ANDA.openai.azure.com"; 
-    const apiKey = "API_KEY_AZURE_ANDA"; 
+    const azureEndpoint = "https://RESOURCE-ANDA.openai.azure.com";
+    const apiKey = "API_KEY_AZURE_ANDA";
     const deploymentName = "NAMA-DEPLOYMENT-ANDA"; // misal: gpt-35-turbo
     const apiVersion = "2024-02-15-preview";
-    
+
     const url = `${azureEndpoint}/openai/deployments/${deploymentName}/chat/completions?api-version=${apiVersion}`;
 
     try {
@@ -355,7 +354,7 @@ async function sendMessage() {
         });
 
         const data = await response.json();
-        
+
         // Hapus pesan loading
         const loadingMessage = document.getElementById(loadingId);
         if (loadingMessage) loadingMessage.remove();
@@ -378,14 +377,14 @@ async function sendMessage() {
 
 function addMessageToChat(text, className, id = null) {
     const chatMessages = document.getElementById('chat-messages');
-    
+
     const messageDiv = document.createElement('div');
     messageDiv.classList.add('message', className);
     messageDiv.innerText = text;
     if (id) messageDiv.id = id;
-    
+
     chatMessages.appendChild(messageDiv);
-    
+
     // Auto-scroll ke bawah
     chatMessages.scrollTop = chatMessages.scrollHeight;
 }
@@ -400,11 +399,11 @@ function startRealTimeSimulation() {
         updateLiveValue('cnc-rpm', 12000, 12100, 0);
 
         // Fluktuasi nilai Milling Beta (Kondisi Warning/Panas)
-        updateLiveValue('mill-temp', 87.0, 89.5, 1); 
+        updateLiveValue('mill-temp', 87.0, 89.5, 1);
         updateLiveValue('mill-vib', 5.2, 5.8, 2);
         updateLiveValue('mill-rpm', 8350, 8420, 0);
         updateLiveValue('mill-coolant-pres', 1.1, 1.4, 1);
-        
+
         // Fluktuasi indikator Energi Terpusat
         updateLiveValue('current-power', 440, 470, 0);
 
@@ -418,7 +417,7 @@ function startRealTimeSimulation() {
             qcGoodEl.innerText = good.toLocaleString();
             qcTotalEl.innerText = total.toLocaleString();
         }
-    }, 1500); 
+    }, 1500);
 }
 
 function updateLiveValue(elementId, min, max, decimals) {
@@ -474,7 +473,7 @@ function applyOptimization(btnElement) {
 }
 
 function analyzeRootCause(issueType) {
-    if(issueType === 'Milling Beta Overheat') {
+    if (issueType === 'Milling Beta Overheat') {
         alert("🔍 AI Root Cause Analysis:\n\nProbabilitas 85%: Overheat disebabkan oleh penurunan tekanan pompa coolant utama (turun 15%) 5 menit sebelum kejadian, yang berkorelasi dengan peningkatan getaran pada poros spindle.\n\nRekomendasi: Purge sistem coolant dan periksa filter.");
     } else {
         alert("🔍 AI Root Cause Analysis:\n\nProbabilitas 92%: Terjadi fluktuasi pasokan listrik dari gardu eksternal. Sistem UPS berhasil menahan beban sementara sebelum genset mengambil alih.\n\nRekomendasi: Lakukan sinkronisasi ulang fase pada panel LVMDP.");
@@ -493,7 +492,7 @@ function closeUserProfile() {
 // --- Logika Halaman Pengaturan Mesin ---
 function loadMachineSettings() {
     const selector = document.getElementById('machine-selector').value;
-    
+
     // Simulasi data konfigurasi yang berbeda untuk tiap mesin
     const data = {
         'cnc-alpha': { rpm: 15000, coolant: 1.5, temp: 85, vib: 5.0, ip: '192.168.1.101', polling: 1500 },
@@ -502,7 +501,7 @@ function loadMachineSettings() {
     };
 
     const config = data[selector];
-    if(config) {
+    if (config) {
         document.getElementById('set-max-rpm').value = config.rpm;
         document.getElementById('set-coolant').value = config.coolant;
         document.getElementById('set-max-temp').value = config.temp;
@@ -518,7 +517,7 @@ function saveMachineSettings() {
 }
 
 function resetMachineSettings() {
-    if(confirm("Peringatan!\n\nApakah Anda yakin ingin mengembalikan pengaturan mesin ini ke parameter Default Pabrik (Factory Reset)?")) {
+    if (confirm("Peringatan!\n\nApakah Anda yakin ingin mengembalikan pengaturan mesin ini ke parameter Default Pabrik (Factory Reset)?")) {
         loadMachineSettings(); // Muat ulang data default
         alert("Pengaturan dikembalikan ke default.");
     }
@@ -563,7 +562,19 @@ async function loadAdminData() {
             btnToggle.innerText = 'AKTIF';
         } else {
             if (!settingsDoc.exists) {
-                await db.collection('settings').doc('global').set({ auto_approve: false });
+                await db.collection('settings').doc('global').set({ auto_approve: false }, { merge: true });
+            }
+        }
+
+        const btnToggleDemo = document.getElementById('btn-toggle-demo-mode');
+        if (btnToggleDemo) {
+            if (settingsDoc.exists && settingsDoc.data().allow_demo) {
+                btnToggleDemo.classList.replace('btn-stop', 'btn-start');
+                btnToggleDemo.innerText = 'AKTIF';
+            } else {
+                if (!settingsDoc.exists) {
+                    await db.collection('settings').doc('global').set({ allow_demo: false }, { merge: true });
+                }
             }
         }
 
@@ -571,24 +582,24 @@ async function loadAdminData() {
         if (!window.usersListenerUnsubscribe) {
             window.usersListenerUnsubscribe = db.collection('users').onSnapshot(usersSnapshot => {
                 const tbody = document.querySelector('#users-table tbody');
-                if(tbody) tbody.innerHTML = '';
-                
+                if (tbody) tbody.innerHTML = '';
+
                 usersSnapshot.forEach(doc => {
                     const data = doc.data();
                     const tr = document.createElement('tr');
-                    
-                    const approvedBadge = data.approved 
-                        ? `<span class="badge badge-success">Disetujui</span>` 
+
+                    const approvedBadge = data.approved
+                        ? `<span class="badge badge-success">Disetujui</span>`
                         : `<span class="badge badge-warning">Menunggu</span>`;
-                        
+
                     const onlineBadge = data.isOnline
                         ? `<br><span class="badge badge-success" style="background:#d1fae5; color:#10b981; margin-top:5px; display:inline-block;"><i class="fas fa-circle" style="font-size:8px;"></i> Online</span>`
                         : `<br><span class="badge badge-light" style="background:#f1f5f9; color:#94a3b8; margin-top:5px; display:inline-block;"><i class="fas fa-circle" style="font-size:8px;"></i> Offline</span>`;
-                        
+
                     const actionBtn = data.approved
                         ? `<button class="btn btn-warning" style="padding: 5px 10px; font-size: 0.8rem;" onclick="updateUserStatus('${doc.id}', false)">Cabut Akses</button>`
                         : `<button class="btn btn-start" style="padding: 5px 10px; font-size: 0.8rem;" onclick="updateUserStatus('${doc.id}', true)">Setujui</button>`;
-                        
+
                     const adminBtn = data.role === 'admin'
                         ? ``
                         : `<button class="btn btn-auto" style="padding: 5px 10px; font-size: 0.8rem; margin-left: 5px;" onclick="updateUserRole('${doc.id}', 'admin')">Jadikan Admin</button>`;
@@ -608,7 +619,7 @@ async function loadAdminData() {
                             ${kickBtn}
                         </td>
                     `;
-                    if(tbody) tbody.appendChild(tr);
+                    if (tbody) tbody.appendChild(tr);
                 });
             });
         }
@@ -617,11 +628,11 @@ async function loadAdminData() {
     }
 }
 
-window.toggleAutoApprove = async function() {
+window.toggleAutoApprove = async function () {
     if (!db) return;
     const btnToggle = document.getElementById('btn-toggle-auto-approve');
     const isActive = btnToggle.innerText === 'AKTIF';
-    
+
     try {
         await db.collection('settings').doc('global').set({ auto_approve: !isActive }, { merge: true });
         if (!isActive) {
@@ -637,7 +648,27 @@ window.toggleAutoApprove = async function() {
     }
 };
 
-window.updateUserStatus = async function(userId, isApproved) {
+window.toggleDemoMode = async function () {
+    if (!db) return;
+    const btnToggle = document.getElementById('btn-toggle-demo-mode');
+    const isActive = btnToggle.innerText === 'AKTIF';
+
+    try {
+        await db.collection('settings').doc('global').set({ allow_demo: !isActive }, { merge: true });
+        if (!isActive) {
+            btnToggle.classList.replace('btn-stop', 'btn-start');
+            btnToggle.innerText = 'AKTIF';
+        } else {
+            btnToggle.classList.replace('btn-start', 'btn-stop');
+            btnToggle.innerText = 'TIDAK AKTIF';
+        }
+        alert(`Mode Demo berhasil diubah menjadi: ${!isActive ? 'AKTIF' : 'TIDAK AKTIF'}`);
+    } catch (e) {
+        alert("Gagal mengubah pengaturan! Pastikan Anda memiliki hak akses.");
+    }
+};
+
+window.updateUserStatus = async function (userId, isApproved) {
     if (!db) return;
     if (confirm(`Yakin ingin ${isApproved ? 'menyetujui' : 'mencabut akses'} pengguna ini?`)) {
         try {
@@ -649,7 +680,7 @@ window.updateUserStatus = async function(userId, isApproved) {
     }
 };
 
-window.kickUser = async function(userId) {
+window.kickUser = async function (userId) {
     if (!db) return;
     if (confirm("Yakin ingin mengeluarkan (kick) pengguna ini secara paksa? Sesi mereka akan segera diakhiri.")) {
         try {
@@ -665,7 +696,7 @@ let globalChatUnsubscribe = null;
 function initGlobalChat() {
     if (!db) return;
     const container = document.getElementById('global-chat-messages');
-    
+
     globalChatUnsubscribe = db.collection('global_chats')
         .orderBy('timestamp', 'asc')
         .onSnapshot(snapshot => {
@@ -678,7 +709,7 @@ function initGlobalChat() {
                 const data = doc.data();
                 renderGlobalMessage(doc.id, data, container);
             });
-            
+
             // Auto-scroll ke bawah HANYA jika sebelumnya sudah di bawah (atau baru load pertama)
             // Jika user sedang scroll ke atas membaca chat lama, pertahankan posisi scrollnya
             if (isNearBottom || container.scrollTop === 0) {
@@ -762,16 +793,16 @@ function escapeHtml(text) {
     return div.innerHTML;
 }
 
-window.sendGlobalMessage = async function() {
+window.sendGlobalMessage = async function () {
     const input = document.getElementById('global-chat-input');
     const text = input.value.trim();
     if (!text || !db) return;
-    
+
     const userUid = sessionStorage.getItem('userUid');
     const userName = sessionStorage.getItem('userName');
     const userEmail = sessionStorage.getItem('userEmail');
     input.value = '';
-    
+
     try {
         await db.collection('global_chats').add({
             text: text,
@@ -780,24 +811,24 @@ window.sendGlobalMessage = async function() {
             senderEmail: userEmail || '',
             timestamp: firebase.firestore.FieldValue.serverTimestamp()
         });
-    } catch(e) {
+    } catch (e) {
         console.error("Gagal mengirim chat:", e);
         alert("Gagal mengirim pesan.");
     }
 };
 
-window.deleteGlobalMessage = async function(msgId) {
+window.deleteGlobalMessage = async function (msgId) {
     if (!db) return;
     if (confirm("Yakin ingin menghapus pesan ini?")) {
         try {
             await db.collection('global_chats').doc(msgId).delete();
-        } catch(e) {
+        } catch (e) {
             alert("Gagal menghapus pesan. Pastikan Anda memiliki hak akses (Admin/Pemilik).");
         }
     }
 };
 
-window.clearAllGlobalChats = async function() {
+window.clearAllGlobalChats = async function () {
     if (!db) return;
     if (confirm("PERINGATAN BAHAYA!\n\nYakin ingin menghapus SEMUA riwayat chat global? Tindakan ini tidak dapat dibatalkan.")) {
         try {
@@ -808,7 +839,7 @@ window.clearAllGlobalChats = async function() {
             });
             await batch.commit(); // Eksekusi penghapusan massal
             alert("Semua riwayat chat berhasil dibersihkan.");
-        } catch(e) {
+        } catch (e) {
             alert("Gagal menghapus chat. Pastikan Anda memiliki hak akses (Admin).");
         }
     }
@@ -817,17 +848,17 @@ window.clearAllGlobalChats = async function() {
 // --- Logika Notifikasi Real-time Admin ---
 function listenForPendingUsers() {
     if (!db) return;
-    
+
     // Dengarkan perubahan pada koleksi users di mana approved = false
     db.collection('users').where('approved', '==', false).onSnapshot(snapshot => {
         snapshot.docChanges().forEach(change => {
             const userData = change.doc.data();
             const userId = change.doc.id;
-            
+
             if (change.type === 'added') {
                 showAdminNotification(userId, userData.name || 'User Tanpa Nama', userData.email || 'Tanpa Email');
             }
-            
+
             // Jika user dihapus atau disetujui (dari popup maupun tabel), notifikasi akan hilang otomatis
             if (change.type === 'removed' || (change.type === 'modified' && userData.approved === true)) {
                 const existingNotif = document.getElementById(`notif-${userId}`);
@@ -860,7 +891,7 @@ function showAdminNotification(userId, name, email) {
     container.appendChild(notif);
 }
 
-window.handleQuickApprove = async function(userId, isApproved) {
+window.handleQuickApprove = async function (userId, isApproved) {
     if (!db) return;
     try {
         if (isApproved) {
@@ -875,7 +906,7 @@ window.handleQuickApprove = async function(userId, isApproved) {
     }
 };
 
-window.updateUserRole = async function(userId, newRole) {
+window.updateUserRole = async function (userId, newRole) {
     if (!db) return;
     if (confirm(`Yakin ingin menjadikan pengguna ini sebagai ${newRole}? Mereka akan mendapatkan akses menu penuh.`)) {
         try {
@@ -890,7 +921,7 @@ window.updateUserRole = async function(userId, newRole) {
 // --- Logika AI CCTV Karyawan (Webcam) ---
 let cctvStream = null;
 
-window.toggleCamera = async function() {
+window.toggleCamera = async function () {
     const videoElement = document.getElementById('cctv-video');
     const mockBg = document.getElementById('cctv-mock-bg');
     const toggleBtn = document.getElementById('btn-toggle-camera');
@@ -902,33 +933,33 @@ window.toggleCamera = async function() {
         cctvStream.getTracks().forEach(track => track.stop());
         cctvStream = null;
         videoElement.srcObject = null;
-        
+
         // Sembunyikan video dan boks, tampilkan background bohongan
         videoElement.style.display = 'none';
         boundingBoxes.style.display = 'none';
         mockBg.style.display = 'block';
-        
+
         // Ubah tampilan tombol kembali ke mode aktifkan (biru)
         toggleBtn.style.background = '#2563eb';
         toggleBtn.innerHTML = '<i class="fas fa-video"></i> <span>Aktifkan Kamera</span>';
-    } 
+    }
     // Jika kamera mati, nyalakan
     else {
         try {
             // Minta akses kamera ke user
             const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
             cctvStream = stream;
-            
+
             // Pasang stream ke elemen video
             videoElement.srcObject = stream;
             videoElement.style.display = 'block';
-            
+
             // Sembunyikan background bohongan
             mockBg.style.display = 'none';
-            
+
             // Tampilkan bounding boxes seolah-olah AI sedang mendeteksi
             boundingBoxes.style.display = 'block';
-            
+
             // Ubah tampilan tombol menjadi mode matikan (merah)
             toggleBtn.style.background = '#ef4444';
             toggleBtn.innerHTML = '<i class="fas fa-video-slash"></i> <span>Matikan Kamera</span>';
@@ -941,19 +972,19 @@ window.toggleCamera = async function() {
 };
 
 // --- Logika Dark Mode / Light Mode ---
-window.toggleDarkMode = function() {
+window.toggleDarkMode = function () {
     const body = document.body;
     const btn = document.getElementById('btn-dark-mode');
-    
+
     body.classList.toggle('light-mode');
-    
+
     const isDark = !body.classList.contains('light-mode');
-    
+
     if (btn) {
         btn.textContent = isDark ? 'ON' : 'OFF';
         btn.className = isDark ? 'btn btn-start' : 'btn btn-stop';
     }
-    
+
     // Simpan preferensi ke localStorage
     localStorage.setItem('visitrak-theme', isDark ? 'dark' : 'light');
 };
@@ -962,7 +993,7 @@ window.toggleDarkMode = function() {
 (function initTheme() {
     const savedTheme = localStorage.getItem('visitrak-theme');
     const btn = document.getElementById('btn-dark-mode');
-    
+
     if (savedTheme === 'light') {
         document.body.classList.add('light-mode');
         if (btn) {
@@ -1028,22 +1059,22 @@ let stlWireframeOn = false;
 
 function initSTLViewer() {
     buildSTLFileBrowser();
-    
+
     if (stlViewerInitialized) {
         onSTLResize();
         return;
     }
-    
+
     const container = document.getElementById('stl-viewer-container');
     if (!container || container.offsetWidth === 0) return;
-    
+
     // Scene
     stlScene = new THREE.Scene();
-    
+
     // Camera
     stlCamera = new THREE.PerspectiveCamera(45, container.offsetWidth / container.offsetHeight, 0.1, 2000);
     stlCamera.position.set(60, 60, 60);
-    
+
     // Renderer
     stlRenderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
     stlRenderer.setSize(container.offsetWidth, container.offsetHeight);
@@ -1051,30 +1082,30 @@ function initSTLViewer() {
     stlRenderer.setClearColor(0x0a0f1e);
     container.innerHTML = '';
     container.appendChild(stlRenderer.domElement);
-    
+
     // Lights
     const ambientLight = new THREE.AmbientLight(0x404060, 0.6);
     stlScene.add(ambientLight);
-    
+
     const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
     directionalLight.position.set(50, 80, 50);
     stlScene.add(directionalLight);
-    
+
     const backLight = new THREE.DirectionalLight(0x4488ff, 0.3);
     backLight.position.set(-50, -30, -50);
     stlScene.add(backLight);
-    
+
     // Grid
     const grid = new THREE.GridHelper(200, 20, 0x1e3a5f, 0x0d1b2a);
     stlScene.add(grid);
-    
+
     // Orbit Controls
     stlControls = new THREE.OrbitControls(stlCamera, stlRenderer.domElement);
     stlControls.enableDamping = true;
     stlControls.dampingFactor = 0.08;
     stlControls.autoRotate = false;
     stlControls.autoRotateSpeed = 2;
-    
+
     // Animate
     function animate() {
         stlAnimId = requestAnimationFrame(animate);
@@ -1082,10 +1113,10 @@ function initSTLViewer() {
         stlRenderer.render(stlScene, stlCamera);
     }
     animate();
-    
+
     // Resize handler
     window.addEventListener('resize', onSTLResize);
-    
+
     stlViewerInitialized = true;
 }
 
@@ -1104,40 +1135,40 @@ function buildSTLFileBrowser() {
     const browser = document.getElementById('stl-file-browser');
     if (!browser) return;
     browser.innerHTML = '';
-    
+
     for (const [machineName, machineData] of Object.entries(stlCatalog)) {
         const folderGroup = document.createElement('div');
         folderGroup.className = 'stl-folder-group';
-        
+
         const folderHeader = document.createElement('div');
         folderHeader.className = 'stl-folder-header';
         folderHeader.innerHTML = `<i class="fas fa-chevron-right"></i><i class="fas fa-folder"></i> ${machineName}`;
-        
+
         const folderChildren = document.createElement('div');
         folderChildren.className = 'stl-folder-children';
-        
+
         folderHeader.addEventListener('click', () => {
             folderHeader.classList.toggle('open');
             folderChildren.classList.toggle('open');
             const folderIcon = folderHeader.querySelectorAll('i')[1];
             folderIcon.className = folderChildren.classList.contains('open') ? 'fas fa-folder-open' : 'fas fa-folder';
         });
-        
+
         for (const [partCategory, files] of Object.entries(machineData.parts)) {
             const subGroup = document.createElement('div');
             subGroup.className = 'stl-subfolder-group';
-            
+
             const subHeader = document.createElement('div');
             subHeader.className = 'stl-subfolder-header';
             subHeader.innerHTML = `<i class="fas fa-folder"></i> ${partCategory}`;
-            
+
             const subChildren = document.createElement('div');
             subChildren.className = 'stl-folder-children';
-            
+
             subHeader.addEventListener('click', () => {
                 subChildren.classList.toggle('open');
             });
-            
+
             files.forEach(fileData => {
                 const fileItem = document.createElement('div');
                 fileItem.className = 'stl-file-item';
@@ -1149,12 +1180,12 @@ function buildSTLFileBrowser() {
                 });
                 subChildren.appendChild(fileItem);
             });
-            
+
             subGroup.appendChild(subHeader);
             subGroup.appendChild(subChildren);
             folderChildren.appendChild(subGroup);
         }
-        
+
         folderGroup.appendChild(folderHeader);
         folderGroup.appendChild(folderChildren);
         browser.appendChild(folderGroup);
@@ -1163,23 +1194,23 @@ function buildSTLFileBrowser() {
 
 function loadSTLFile(fileData, machineName, partCategory) {
     if (!stlScene) return;
-    
+
     // Remove existing mesh
     if (stlCurrentMesh) {
         stlScene.remove(stlCurrentMesh);
         if (stlCurrentMesh.geometry) stlCurrentMesh.geometry.dispose();
         if (stlCurrentMesh.material) stlCurrentMesh.material.dispose();
     }
-    
+
     // Hide placeholder
     const placeholder = document.getElementById('stl-placeholder');
     if (placeholder) placeholder.style.display = 'none';
-    
+
     const loader = new THREE.STLLoader();
-    loader.load(fileData.file, function(geometry) {
+    loader.load(fileData.file, function (geometry) {
         geometry.computeBoundingBox();
         geometry.computeVertexNormals();
-        
+
         const material = new THREE.MeshPhongMaterial({
             color: 0x06b6d4,
             specular: 0x222222,
@@ -1187,33 +1218,33 @@ function loadSTLFile(fileData, machineName, partCategory) {
             flatShading: false,
             wireframe: stlWireframeOn
         });
-        
+
         stlCurrentMesh = new THREE.Mesh(geometry, material);
-        
+
         // Center the model
         const box = geometry.boundingBox;
         const center = new THREE.Vector3();
         box.getCenter(center);
         stlCurrentMesh.position.sub(center);
-        
+
         // Scale to fit viewport nicely
         const size = new THREE.Vector3();
         box.getSize(size);
         const maxDim = Math.max(size.x, size.y, size.z);
         const scale = 40 / maxDim;
         stlCurrentMesh.scale.set(scale, scale, scale);
-        
+
         stlScene.add(stlCurrentMesh);
-        
+
         // Reset camera to fit model
         stlCamera.position.set(60, 50, 60);
         stlControls.target.set(0, 0, 0);
         stlControls.update();
-        
+
         // Update info panel
         updateSTLInfo(geometry, fileData, machineName, partCategory);
-        
-    }, undefined, function(error) {
+
+    }, undefined, function (error) {
         console.error('Error loading STL:', error);
         alert('Gagal memuat file STL: ' + fileData.file);
     });
@@ -1222,53 +1253,53 @@ function loadSTLFile(fileData, machineName, partCategory) {
 function updateSTLInfo(geometry, fileData, machineName, partCategory) {
     const infoPanel = document.getElementById('stl-info-panel');
     if (infoPanel) infoPanel.style.display = 'block';
-    
+
     // File name
     document.getElementById('stl-info-name').textContent = fileData.name;
     document.getElementById('stl-info-machine').textContent = machineName;
     document.getElementById('stl-info-category').textContent = partCategory;
-    
+
     // Triangle count
     const triCount = geometry.attributes.position.count / 3;
     document.getElementById('stl-info-triangles').textContent = triCount.toLocaleString();
-    
+
     // Bounding box dimensions
     const box = geometry.boundingBox;
     const size = new THREE.Vector3();
     box.getSize(size);
-    document.getElementById('stl-info-dimensions').textContent = 
+    document.getElementById('stl-info-dimensions').textContent =
         `${size.x.toFixed(1)} × ${size.y.toFixed(1)} × ${size.z.toFixed(1)}`;
-    
+
     // File size (estimate from buffer)
     const fileSize = 84 + (triCount * 50);
     if (fileSize > 1024 * 1024) {
-        document.getElementById('stl-info-size').textContent = (fileSize / (1024*1024)).toFixed(2) + ' MB';
+        document.getElementById('stl-info-size').textContent = (fileSize / (1024 * 1024)).toFixed(2) + ' MB';
     } else {
         document.getElementById('stl-info-size').textContent = (fileSize / 1024).toFixed(1) + ' KB';
     }
-    
+
     // Volume calculation (signed tetrahedron volume method)
     const positions = geometry.attributes.position.array;
     let volume = 0;
     let surfaceArea = 0;
-    
+
     for (let i = 0; i < positions.length; i += 9) {
-        const v1x = positions[i], v1y = positions[i+1], v1z = positions[i+2];
-        const v2x = positions[i+3], v2y = positions[i+4], v2z = positions[i+5];
-        const v3x = positions[i+6], v3y = positions[i+7], v3z = positions[i+8];
-        
+        const v1x = positions[i], v1y = positions[i + 1], v1z = positions[i + 2];
+        const v2x = positions[i + 3], v2y = positions[i + 4], v2z = positions[i + 5];
+        const v3x = positions[i + 6], v3y = positions[i + 7], v3z = positions[i + 8];
+
         // Signed volume of tetrahedron with origin
         volume += (v1x * (v2y * v3z - v3y * v2z) - v2x * (v1y * v3z - v3y * v1z) + v3x * (v1y * v2z - v2y * v1z));
-        
+
         // Triangle area using cross product
         const ax = v2x - v1x, ay = v2y - v1y, az = v2z - v1z;
         const bx = v3x - v1x, by = v3y - v1y, bz = v3z - v1z;
         const cx = ay * bz - az * by;
         const cy = az * bx - ax * bz;
         const cz = ax * by - ay * bx;
-        surfaceArea += Math.sqrt(cx*cx + cy*cy + cz*cz) * 0.5;
+        surfaceArea += Math.sqrt(cx * cx + cy * cy + cz * cz) * 0.5;
     }
-    
+
     volume = Math.abs(volume / 6);
     // Convert mm³ to cm³
     document.getElementById('stl-info-volume').textContent = (volume / 1000).toFixed(2);
@@ -1276,21 +1307,21 @@ function updateSTLInfo(geometry, fileData, machineName, partCategory) {
     document.getElementById('stl-info-surface').textContent = (surfaceArea / 100).toFixed(2);
 }
 
-window.resetSTLCamera = function() {
+window.resetSTLCamera = function () {
     if (!stlCamera || !stlControls) return;
     stlCamera.position.set(60, 50, 60);
     stlControls.target.set(0, 0, 0);
     stlControls.update();
 };
 
-window.toggleSTLWireframe = function() {
+window.toggleSTLWireframe = function () {
     stlWireframeOn = !stlWireframeOn;
     if (stlCurrentMesh && stlCurrentMesh.material) {
         stlCurrentMesh.material.wireframe = stlWireframeOn;
     }
 };
 
-window.toggleSTLAutoRotate = function() {
+window.toggleSTLAutoRotate = function () {
     if (!stlControls) return;
     stlControls.autoRotate = !stlControls.autoRotate;
 };
