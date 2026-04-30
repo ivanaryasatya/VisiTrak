@@ -1,0 +1,113 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ============================================================
+    //  HELPER FUNCTIONS
+    // ============================================================
+
+    // Cek apakah user sudah login (Firebase Auth)
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    // Cek apakah user yang request adalah pemilik dokumen
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    // Cek apakah user yang request memiliki role 'admin' di Firestore
+    function isAdmin() {
+      return isAuthenticated() &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+    }
+
+
+    // ============================================================
+    //  COLLECTION: users
+    //  Menyimpan data profil, role, status approval, dan presence
+    // ============================================================
+    match /users/{userId} {
+
+      // READ:
+      //   - User bisa baca dokumen miliknya sendiri (untuk cek login, forceLogout listener)
+      //   - Admin bisa baca SEMUA dokumen user (untuk tabel manajemen pengguna)
+      allow read: if isOwner(userId) || isAdmin();
+
+      // CREATE:
+      //   - Hanya bisa membuat dokumen untuk dirinya sendiri
+      //   - Role HARUS 'user' (tidak boleh langsung jadi admin)
+      //   - Field 'approved' hanya boleh true jika setting auto_approve aktif
+      allow create: if isOwner(userId)
+        && request.resource.data.role == 'user'
+        && (
+          request.resource.data.approved == false
+          || get(/databases/$(database)/documents/settings/global).data.auto_approve == true
+        );
+
+      // UPDATE:
+      //   - User biasa HANYA boleh mengubah field: isOnline, forceLogout (untuk presence system)
+      //   - Admin boleh mengubah field apapun (approve, kick, ubah role, dll)
+      allow update: if
+        (isOwner(userId) && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['isOnline', 'forceLogout']))
+        || isAdmin();
+
+      // DELETE:
+      //   - Hanya admin yang boleh menghapus user (reject user baru)
+      allow delete: if isAdmin();
+    }
+
+
+    // ============================================================
+    //  COLLECTION: settings
+    //  Menyimpan konfigurasi global seperti auto_approve
+    // ============================================================
+    match /settings/{docId} {
+
+      // READ:
+      //   - Semua user yang sudah login bisa baca (diperlukan saat login untuk cek auto_approve)
+      allow read: if isAuthenticated();
+
+      // WRITE (create/update/delete):
+      //   - Hanya admin yang boleh mengubah pengaturan global
+      allow write: if isAdmin();
+    }
+
+
+    // ============================================================
+    //  COLLECTION: global_chats
+    //  Forum chat real-time antar seluruh pengguna
+    // ============================================================
+    match /global_chats/{messageId} {
+
+      // READ:
+      //   - Semua user yang sudah login bisa membaca chat
+      allow read: if isAuthenticated();
+
+      // CREATE:
+      //   - User yang sudah login bisa mengirim pesan
+      //   - Field senderUid HARUS sama dengan UID pengirim (tidak bisa impersonate orang lain)
+      allow create: if isAuthenticated()
+        && request.resource.data.senderUid == request.auth.uid;
+
+      // DELETE:
+      //   - Pemilik pesan bisa menghapus pesannya sendiri
+      //   - Admin bisa menghapus pesan siapapun (termasuk clear all)
+      allow delete: if isAuthenticated()
+        && (resource.data.senderUid == request.auth.uid || isAdmin());
+
+      // UPDATE:
+      //   - Pesan yang sudah terkirim TIDAK boleh diedit oleh siapapun
+      allow update: if false;
+    }
+
+
+    // ============================================================
+    //  DEFAULT: Tolak semua akses ke collection lain yang tidak didefinisikan
+    // ============================================================
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
