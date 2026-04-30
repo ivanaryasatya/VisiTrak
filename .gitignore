@@ -1,3 +1,2 @@
-# Sembunyikan Konfigurasi Kredensial API
-firebase-config.js
+# Environment variables (jangan di-push)
 .env
