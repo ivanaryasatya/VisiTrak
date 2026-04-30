@@ -918,3 +918,35 @@ window.toggleCamera = async function() {
         }
     }
 };
+
+// --- Logika Dark Mode / Light Mode ---
+window.toggleDarkMode = function() {
+    const body = document.body;
+    const btn = document.getElementById('btn-dark-mode');
+    
+    body.classList.toggle('light-mode');
+    
+    const isDark = !body.classList.contains('light-mode');
+    
+    if (btn) {
+        btn.textContent = isDark ? 'ON' : 'OFF';
+        btn.className = isDark ? 'btn btn-start' : 'btn btn-stop';
+    }
+    
+    // Simpan preferensi ke localStorage
+    localStorage.setItem('visitrak-theme', isDark ? 'dark' : 'light');
+};
+
+// Muat preferensi tema saat halaman dimuat
+(function initTheme() {
+    const savedTheme = localStorage.getItem('visitrak-theme');
+    const btn = document.getElementById('btn-dark-mode');
+    
+    if (savedTheme === 'light') {
+        document.body.classList.add('light-mode');
+        if (btn) {
+            btn.textContent = 'OFF';
+            btn.className = 'btn btn-stop';
+        }
+    }
+})();
