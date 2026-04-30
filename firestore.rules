@@ -89,7 +89,8 @@ service cloud.firestore {
       //   - User yang sudah login bisa mengirim pesan
       //   - Field senderUid HARUS sama dengan UID pengirim (tidak bisa impersonate orang lain)
       allow create: if isAuthenticated()
-        && request.resource.data.senderUid == request.auth.uid;
+        && request.resource.data.senderUid == request.auth.uid
+        && request.resource.data.senderEmail == request.auth.token.email;
 
       // DELETE:
       //   - Pemilik pesan bisa menghapus pesannya sendiri

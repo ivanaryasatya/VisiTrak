@@ -474,6 +474,116 @@ th {
     100% { transform: scale(0.98); opacity: 0.8; }
 }
 
+/* --- Global Chat: WhatsApp-style Bubbles --- */
+.chat-container-bg {
+    background: #e5ddd5 !important;
+    background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23c8bfb0' fill-opacity='0.15'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E") !important;
+}
+
+.global-chat-wrapper {
+    display: flex;
+    margin-bottom: 2px;
+    animation: chatFadeIn 0.3s ease-out;
+}
+
+.global-chat-wrapper.own {
+    justify-content: flex-end;
+}
+
+.global-chat-wrapper.other {
+    justify-content: flex-start;
+}
+
+@keyframes chatFadeIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.global-chat-bubble {
+    max-width: 65%;
+    padding: 8px 12px;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    line-height: 1.45;
+    position: relative;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.13);
+    word-wrap: break-word;
+}
+
+/* Bubble milik sendiri — hijau WhatsApp */
+.global-chat-bubble.own {
+    background: #d9fdd3;
+    color: #111b21;
+    border-top-right-radius: 0;
+}
+
+/* Bubble orang lain — putih */
+.global-chat-bubble.other {
+    background: #ffffff;
+    color: #111b21;
+    border-top-left-radius: 0;
+}
+
+/* Nama pengirim */
+.global-chat-sender-name {
+    font-size: 0.8rem;
+    font-weight: 700;
+    margin-bottom: 2px;
+    line-height: 1.2;
+}
+
+/* Email/akun di bawah nama */
+.global-chat-sender-email {
+    font-size: 0.68rem;
+    color: #667781;
+    font-weight: 400;
+    margin-bottom: 4px;
+    line-height: 1.2;
+}
+
+/* Teks pesan */
+.global-chat-text {
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    margin-bottom: 2px;
+}
+
+/* Waktu kirim */
+.global-chat-time {
+    text-align: right;
+    font-size: 0.65rem;
+    color: #667781;
+    margin-top: 2px;
+    line-height: 1;
+}
+
+/* Tombol hapus pesan */
+.chat-action-btn {
+    background: none;
+    border: none;
+    color: #8696a0;
+    cursor: pointer;
+    padding: 4px 6px;
+    border-radius: 50%;
+    font-size: 0.75rem;
+    transition: all 0.2s ease;
+    opacity: 0;
+}
+
+.global-chat-wrapper:hover .chat-action-btn {
+    opacity: 1;
+}
+
+.chat-action-btn:hover {
+    background: rgba(239, 68, 68, 0.1);
+    color: #ef4444;
+}
+
+/* Warna nama berdasarkan hash pengirim (digunakan via inline style di JS) */
+.global-chat-bubble.other .global-chat-sender-name {
+    /* Warna akan di-set secara dinamis di JS berdasarkan nama pengirim */
+}
+
 /* --- Responsive Mobile & Sidebar Toggle --- */
 #sidebar-toggle {
 }

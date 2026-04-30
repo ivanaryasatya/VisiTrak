@@ -677,34 +677,68 @@ function renderGlobalMessage(msgId, data, container) {
     wrapper.className = `global-chat-wrapper ${isOwn ? 'own' : 'other'}`;
 
     // Format Waktu
-    let timeStr = 'Sedang mengirim...';
+    let timeStr = 'Mengirim...';
     if (data.timestamp) {
         const date = data.timestamp.toDate();
         timeStr = date.getHours().toString().padStart(2, '0') + ':' + date.getMinutes().toString().padStart(2, '0');
     }
 
-    // Tombol Aksi (Hapus Per Pesan)
-    let actionBtns = `<div style="position: relative; display: flex; align-items: center;">`;
+    // Generate warna unik berdasarkan nama pengirim (agar konsisten per user)
+    const nameColor = isOwn ? '#075e54' : getNameColor(data.senderName || 'Anonim');
+
+    // Tombol Aksi (Hapus Per Pesan) — muncul saat hover
+    let deleteBtn = '';
     if (isAdmin || isOwn) {
-        actionBtns += `<button class="chat-action-btn" onclick="deleteGlobalMessage('${msgId}')" title="Hapus Pesan"><i class="fas fa-trash"></i></button>`;
+        deleteBtn = `<button class="chat-action-btn" onclick="deleteGlobalMessage('${msgId}')" title="Hapus Pesan"><i class="fas fa-trash"></i></button>`;
     }
-    actionBtns += `</div>`;
+
+    // Info pengirim: nama + email (hanya untuk pesan orang lain)
+    const senderEmail = data.senderEmail || '';
+    let senderInfo = '';
+    if (!isOwn) {
+        senderInfo = `
+            <div class="global-chat-sender-name" style="color: ${nameColor};">${data.senderName || 'Anonim'}</div>
+            ${senderEmail ? `<div class="global-chat-sender-email">${senderEmail}</div>` : ''}
+        `;
+    } else {
+        senderInfo = `
+            <div class="global-chat-sender-name" style="color: ${nameColor};">Anda</div>
+        `;
+    }
 
     wrapper.innerHTML = `
-        <div style="display: flex; align-items: flex-start; gap: 5px; flex-direction: ${isOwn ? 'row-reverse' : 'row'}; width: 100%;">
-            <div class="global-chat-bubble ${isOwn ? 'own' : 'other'}" style="display: flex; flex-direction: column; min-width: 140px;">
-                <div class="global-chat-meta" style="text-align: left; margin-bottom: 4px;">
-                    <strong style="color: ${isOwn ? '#10b981' : '#2563eb'}; font-size: 0.8rem;">${isOwn ? 'Anda' : data.senderName}</strong>
-                </div>
-                <div style="word-wrap: break-word; margin-bottom: 2px;">${data.text}</div>
-                <div class="global-chat-meta" style="text-align: right; margin-top: auto; font-size: 0.65rem; opacity: 0.7; margin-bottom: 0;">
-                    ${timeStr}
-                </div>
+        <div style="display: flex; align-items: flex-start; gap: 4px; flex-direction: ${isOwn ? 'row-reverse' : 'row'}; max-width: 75%;">
+            <div class="global-chat-bubble ${isOwn ? 'own' : 'other'}">
+                ${senderInfo}
+                <div class="global-chat-text">${escapeHtml(data.text)}</div>
+                <div class="global-chat-time">${timeStr}</div>
             </div>
-            ${actionBtns}
+            ${deleteBtn}
         </div>
     `;
     container.appendChild(wrapper);
+}
+
+// Fungsi untuk generate warna unik berdasarkan string nama
+function getNameColor(name) {
+    const colors = [
+        '#e91e63', '#9c27b0', '#673ab7', '#3f51b5', '#2196f3',
+        '#00bcd4', '#009688', '#4caf50', '#ff9800', '#ff5722',
+        '#795548', '#607d8b', '#1976d2', '#c2185b', '#7b1fa2',
+        '#0097a7', '#00796b', '#689f38', '#ef6c00', '#d84315'
+    ];
+    let hash = 0;
+    for (let i = 0; i < name.length; i++) {
+        hash = name.charCodeAt(i) + ((hash << 5) - hash);
+    }
+    return colors[Math.abs(hash) % colors.length];
+}
+
+// Fungsi untuk sanitasi HTML (mencegah XSS di chat)
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
 }
 
 window.sendGlobalMessage = async function() {
@@ -714,6 +748,7 @@ window.sendGlobalMessage = async function() {
     
     const userUid = sessionStorage.getItem('userUid');
     const userName = sessionStorage.getItem('userName');
+    const userEmail = sessionStorage.getItem('userEmail');
     input.value = '';
     
     try {
@@ -721,6 +756,7 @@ window.sendGlobalMessage = async function() {
             text: text,
             senderUid: userUid,
             senderName: userName || 'Anonim',
+            senderEmail: userEmail || '',
             timestamp: firebase.firestore.FieldValue.serverTimestamp()
         });
     } catch(e) {
