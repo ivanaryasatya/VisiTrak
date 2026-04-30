@@ -14,5 +14,5 @@ const firebaseConfig = {
 if (typeof firebase !== 'undefined' && !firebase.apps.length) {
     firebase.initializeApp(firebaseConfig);
 }
-const auth = typeof firebase !== 'undefined' ? firebase.auth() : null;
-const db = typeof firebase !== 'undefined' ? firebase.firestore() : null;
+window.auth = typeof firebase !== 'undefined' ? firebase.auth() : null;
+window.db = typeof firebase !== 'undefined' ? firebase.firestore() : null;
