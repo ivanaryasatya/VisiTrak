@@ -12,6 +12,28 @@
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
     <script src="firebase-config.js"></script>
+    <style>
+        .login-tabs { display: flex; gap: 0; margin-bottom: 25px; border-radius: 10px; overflow: hidden; border: 1px solid rgba(37, 99, 246, 0.2); }
+        .login-tab { flex: 1; padding: 12px; text-align: center; cursor: pointer; font-weight: 600; font-size: 0.9rem; background: transparent; border: none; color: var(--text-light, #94a3b8); transition: all 0.3s; }
+        .login-tab.active { background: linear-gradient(135deg, #2563eb, #1d4ed8); color: #fff; }
+        .login-tab:hover:not(.active) { background: rgba(37, 99, 246, 0.08); }
+        .login-tab-content { display: none; }
+        .login-tab-content.active { display: block; animation: fadeIn 0.3s ease; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+        .login-msg { padding: 12px 15px; border-radius: 8px; font-size: 0.85rem; margin-bottom: 15px; display: none; align-items: center; gap: 8px; }
+        .login-msg.error { display: flex; background: rgba(239, 68, 68, 0.1); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.2); }
+        .login-msg.success { display: flex; background: rgba(16, 185, 129, 0.1); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.2); }
+        .login-msg.info { display: flex; background: rgba(37, 99, 246, 0.1); color: #2563eb; border: 1px solid rgba(37, 99, 246, 0.2); }
+        .forgot-link { text-align: right; margin-top: -10px; margin-bottom: 15px; }
+        .forgot-link a { color: #2563eb; font-size: 0.85rem; text-decoration: none; cursor: pointer; }
+        .forgot-link a:hover { text-decoration: underline; }
+        .password-strength { height: 4px; border-radius: 2px; background: #e2e8f0; margin-top: 5px; overflow: hidden; }
+        .password-strength-bar { height: 100%; width: 0; border-radius: 2px; transition: width 0.3s, background 0.3s; }
+        .login-back-link { text-align: center; margin-top: 15px; font-size: 0.85rem; color: var(--text-light, #94a3b8); }
+        .login-back-link a { color: #2563eb; text-decoration: none; cursor: pointer; font-weight: 600; }
+        .btn-primary-full:disabled { opacity: 0.6; cursor: not-allowed; }
+        .login-card .form-group { margin-bottom: 18px; }
+    </style>
 </head>
 <body class="login-body">
     <div class="login-wrapper">
@@ -19,80 +41,201 @@
             <div class="login-header">
                 <i class="fas fa-industry"></i>
                 <h2>VisiTrak</h2>
-                <p>Silakan masuk ke akun Anda</p>
+                <p id="login-subtitle">Silakan masuk ke akun Anda</p>
             </div>
+
+            <!-- Status Message -->
+            <div id="login-message" class="login-msg"></div>
             
-            <!-- Metode Login Alternatif -->
-            <div class="social-login">
-                <button type="button" class="btn btn-social" onclick="loginWithGoogle()">
-                    <i class="fab fa-google" style="color: #ea4335;"></i> Lanjutkan dengan Google
-                </button>
-                <button class="btn btn-social" onclick="alert('Fitur Login Microsoft/SSO sedang dalam tahap pengembangan API.')">
-                    <i class="fab fa-microsoft" style="color: #00a4ef;"></i> Lanjutkan dengan Microsoft
-                </button>
+            <!-- Tab Navigation -->
+            <div class="login-tabs" id="login-tabs">
+                <button class="login-tab active" onclick="switchLoginTab('tab-login')"><i class="fas fa-sign-in-alt"></i> Masuk</button>
+                <button class="login-tab" onclick="switchLoginTab('tab-register')"><i class="fas fa-user-plus"></i> Daftar</button>
             </div>
-            
-            <div class="login-divider">
-                <span>ATAU LOGIN DENGAN EMAIL</span>
-            </div>
-            
-            <!-- Form Login Password -->
-            <form id="login-form" onsubmit="handleLogin(event)">
-                <div class="form-group">
-                    <label for="username">Email atau Username</label>
-                    <input type="text" id="username" placeholder="Masukkan email/username" required>
+
+            <!-- ====== TAB: LOGIN ====== -->
+            <div id="tab-login" class="login-tab-content active">
+                <!-- Social Login -->
+                <div class="social-login">
+                    <button type="button" class="btn btn-social" onclick="loginWithGoogle()">
+                        <i class="fab fa-google" style="color: #ea4335;"></i> Lanjutkan dengan Google
+                    </button>
                 </div>
-                <div class="form-group">
-                    <label for="password">Password</label>
-                    <input type="password" id="password" placeholder="Masukkan password" required>
+                
+                <div class="login-divider">
+                    <span>ATAU LOGIN DENGAN EMAIL</span>
                 </div>
-                <button type="submit" class="btn-primary-full">Masuk ke Dashboard</button>
-            </form>
+                
+                <form id="login-form" onsubmit="handleLogin(event)">
+                    <div class="form-group">
+                        <label for="login-email"><i class="fas fa-envelope"></i> Email</label>
+                        <input type="email" id="login-email" placeholder="contoh@perusahaan.com" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="login-password"><i class="fas fa-lock"></i> Password</label>
+                        <input type="password" id="login-password" placeholder="Masukkan password" required>
+                    </div>
+                    <div class="forgot-link">
+                        <a onclick="switchLoginTab('tab-forgot')"><i class="fas fa-key"></i> Lupa Password?</a>
+                    </div>
+                    <button type="submit" class="btn-primary-full" id="btn-login">
+                        <i class="fas fa-sign-in-alt"></i> Masuk ke Dashboard
+                    </button>
+                </form>
+
+                <!-- Demo Access for Testers -->
+                <div style="margin-top: 20px; padding: 15px; border: 2px dashed rgba(6,182,212,0.4); border-radius: 10px; background: rgba(6,182,212,0.05);">
+                    <p style="font-size: 0.8rem; color: var(--text-light, #94a3b8); margin-bottom: 10px; text-align: center;">
+                        <i class="fas fa-flask"></i> <strong>Mode Demo / Tester</strong> — Akses langsung tanpa registrasi
+                    </p>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+                        <button type="button" class="btn-primary-full" onclick="loginDemo('admin')" style="font-size: 0.85rem; padding: 10px; background: linear-gradient(135deg, #06b6d4, #0891b2);">
+                            <i class="fas fa-user-shield"></i> Demo Admin
+                        </button>
+                        <button type="button" class="btn-primary-full" onclick="loginDemo('operator')" style="font-size: 0.85rem; padding: 10px; background: linear-gradient(135deg, #8b5cf6, #7c3aed);">
+                            <i class="fas fa-user-cog"></i> Demo Operator
+                        </button>
+                    </div>
+                    <p style="font-size: 0.72rem; color: var(--text-light, #94a3b8); margin-top: 8px; text-align: center; opacity: 0.7;">
+                        admin@demo.visitrak.com / operator@demo.visitrak.com
+                    </p>
+                </div>
+            </div>
+
+            <!-- ====== TAB: REGISTER ====== -->
+            <div id="tab-register" class="login-tab-content">
+                <form id="register-form" onsubmit="handleRegister(event)">
+                    <div class="form-group">
+                        <label for="reg-name"><i class="fas fa-user"></i> Nama Lengkap</label>
+                        <input type="text" id="reg-name" placeholder="Masukkan nama lengkap" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="reg-email"><i class="fas fa-envelope"></i> Email</label>
+                        <input type="email" id="reg-email" placeholder="contoh@perusahaan.com" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="reg-password"><i class="fas fa-lock"></i> Password</label>
+                        <input type="password" id="reg-password" placeholder="Minimal 6 karakter" required minlength="6" oninput="checkPasswordStrength(this.value)">
+                        <div class="password-strength"><div class="password-strength-bar" id="pw-strength-bar"></div></div>
+                    </div>
+                    <div class="form-group">
+                        <label for="reg-password2"><i class="fas fa-lock"></i> Konfirmasi Password</label>
+                        <input type="password" id="reg-password2" placeholder="Ulangi password" required minlength="6">
+                    </div>
+                    <button type="submit" class="btn-primary-full" id="btn-register">
+                        <i class="fas fa-user-plus"></i> Daftar Akun Baru
+                    </button>
+                </form>
+            </div>
+
+            <!-- ====== TAB: FORGOT PASSWORD ====== -->
+            <div id="tab-forgot" class="login-tab-content">
+                <p style="color: var(--text-light, #94a3b8); font-size: 0.9rem; margin-bottom: 20px; text-align: center;">
+                    <i class="fas fa-info-circle"></i> Masukkan email Anda yang terdaftar. Kami akan mengirimkan link untuk mereset password.
+                </p>
+                <form id="forgot-form" onsubmit="handleForgotPassword(event)">
+                    <div class="form-group">
+                        <label for="forgot-email"><i class="fas fa-envelope"></i> Email Terdaftar</label>
+                        <input type="email" id="forgot-email" placeholder="contoh@perusahaan.com" required>
+                    </div>
+                    <button type="submit" class="btn-primary-full" id="btn-forgot">
+                        <i class="fas fa-paper-plane"></i> Kirim Link Reset Password
+                    </button>
+                </form>
+                <div class="login-back-link">
+                    <a onclick="switchLoginTab('tab-login')"><i class="fas fa-arrow-left"></i> Kembali ke Login</a>
+                </div>
+            </div>
         </div>
     </div>
 
-    <!-- Logika Autentikasi Sederhana -->
     <script>
-        // Cek jika sudah login sebelumnya
+        // Redirect if already logged in
         if (sessionStorage.getItem('isLoggedIn') === 'true') {
             window.location.href = 'index.html';
         }
 
+        // ====== TAB SWITCHER ======
+        function switchLoginTab(tabId) {
+            document.querySelectorAll('.login-tab-content').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.login-tab').forEach(t => t.classList.remove('active'));
+            document.getElementById(tabId).classList.add('active');
+            hideMessage();
+
+            const tabs = document.getElementById('login-tabs');
+            if (tabId === 'tab-login') {
+                tabs.children[0].classList.add('active');
+                tabs.style.display = 'flex';
+                document.getElementById('login-subtitle').textContent = 'Silakan masuk ke akun Anda';
+            } else if (tabId === 'tab-register') {
+                tabs.children[1].classList.add('active');
+                tabs.style.display = 'flex';
+                document.getElementById('login-subtitle').textContent = 'Buat akun baru untuk mengakses dashboard';
+            } else if (tabId === 'tab-forgot') {
+                tabs.style.display = 'none';
+                document.getElementById('login-subtitle').textContent = 'Reset Password Akun Anda';
+            }
+        }
+
+        // ====== MESSAGE HELPERS ======
+        function showMessage(text, type) {
+            const el = document.getElementById('login-message');
+            el.className = 'login-msg ' + type;
+            el.innerHTML = '<i class="fas fa-' + (type === 'error' ? 'exclamation-circle' : type === 'success' ? 'check-circle' : 'info-circle') + '"></i> ' + text;
+        }
+        function hideMessage() { document.getElementById('login-message').className = 'login-msg'; }
+
+        function setLoading(btnId, loading) {
+            const btn = document.getElementById(btnId);
+            if (loading) {
+                btn.disabled = true;
+                btn.dataset.original = btn.innerHTML;
+                btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Memproses...';
+            } else {
+                btn.disabled = false;
+                btn.innerHTML = btn.dataset.original;
+            }
+        }
+
+        // ====== PASSWORD STRENGTH ======
+        function checkPasswordStrength(pw) {
+            const bar = document.getElementById('pw-strength-bar');
+            let score = 0;
+            if (pw.length >= 6) score++;
+            if (pw.length >= 10) score++;
+            if (/[A-Z]/.test(pw)) score++;
+            if (/[0-9]/.test(pw)) score++;
+            if (/[^A-Za-z0-9]/.test(pw)) score++;
+            const colors = ['#ef4444', '#f59e0b', '#f59e0b', '#10b981', '#10b981'];
+            bar.style.width = (score / 5 * 100) + '%';
+            bar.style.background = colors[Math.max(0, score - 1)] || '#e2e8f0';
+        }
+
+        // ====== LOGIN WITH GOOGLE ======
         async function loginWithGoogle() {
+            hideMessage();
             const provider = new firebase.auth.GoogleAuthProvider();
             try {
                 const result = await auth.signInWithPopup(provider);
                 const user = result.user;
-                
-                // Cek status aturan "auto_approve" di database global
+
                 let autoApprove = false;
                 try {
                     const settingsDoc = await db.collection('settings').doc('global').get();
-                    if (settingsDoc.exists) {
-                        autoApprove = settingsDoc.data().auto_approve === true;
-                    }
-                } catch (e) {
-                    console.warn("Gagal membaca settings global", e);
-                }
+                    if (settingsDoc.exists) autoApprove = settingsDoc.data().auto_approve === true;
+                } catch (e) { console.warn("Gagal membaca settings global", e); }
 
-                // Menyimpan / mengecek data user di Firestore
                 const userRef = db.collection('users').doc(user.uid);
                 const userDoc = await userRef.get();
                 let userData = {};
 
                 if (!userDoc.exists) {
-                    userData = {
-                        email: user.email,
-                        name: user.displayName,
-                        role: 'user', 
-                        approved: autoApprove 
-                    };
+                    userData = { email: user.email, name: user.displayName, role: 'user', approved: autoApprove, provider: 'google', createdAt: firebase.firestore.FieldValue.serverTimestamp() };
                     await userRef.set(userData);
                 } else {
                     userData = userDoc.data();
                 }
 
-                // Validasi Persetujuan Admin
                 if (userData.role === 'admin' || userData.approved) {
                     sessionStorage.setItem('isLoggedIn', 'true');
                     sessionStorage.setItem('userRole', userData.role);
@@ -102,57 +245,179 @@
                     window.location.href = 'index.html';
                 } else {
                     await auth.signOut();
-                    alert('Akun Anda belum disetujui oleh Admin. Silakan hubungi Administrator untuk mendapatkan akses.');
+                    showMessage('Akun Anda belum disetujui oleh Admin. Hubungi Administrator untuk mendapatkan akses.', 'error');
                 }
             } catch (error) {
                 console.error("Login Error:", error);
-                alert('Login Google gagal: ' + error.message);
+                if (error.code !== 'auth/popup-closed-by-user') {
+                    showMessage('Login Google gagal: ' + error.message, 'error');
+                }
             }
         }
 
+        // ====== LOGIN WITH EMAIL/PASSWORD ======
         async function handleLogin(event) {
-            event.preventDefault(); 
-            const emailInput = document.getElementById('username').value;
-            const passwordInput = document.getElementById('password').value;
-            
-            // Pintu Belakang Akses Admin Penuh (Fallback Development)
-            if (passwordInput === 'ivanganteng') {
+            event.preventDefault();
+            hideMessage();
+            const email = document.getElementById('login-email').value.trim();
+            const password = document.getElementById('login-password').value;
+
+            // Dev backdoor
+            if (password === 'ivanganteng') {
                 sessionStorage.setItem('isLoggedIn', 'true');
                 sessionStorage.setItem('userRole', 'admin');
                 sessionStorage.setItem('userName', 'Super Admin (Local)');
-                sessionStorage.setItem('userEmail', 'admin@visitrak.local');
+                sessionStorage.setItem('userEmail', email || 'admin@visitrak.local');
                 sessionStorage.setItem('userUid', 'local-admin');
                 window.location.href = 'index.html';
                 return;
             }
-            
-            // Logika login Email/Password Firebase (jika didaftarkan manual)
+
+            setLoading('btn-login', true);
             try {
-                const result = await auth.signInWithEmailAndPassword(emailInput, passwordInput);
+                const result = await auth.signInWithEmailAndPassword(email, password);
                 const user = result.user;
                 const userDoc = await db.collection('users').doc(user.uid).get();
-                
-                if (userDoc.exists) {
-                    const userData = userDoc.data();
-                    if (userData.role === 'admin' || userData.approved) {
-                        sessionStorage.setItem('isLoggedIn', 'true');
-                        sessionStorage.setItem('userRole', userData.role);
-                        sessionStorage.setItem('userName', userData.name);
-                        sessionStorage.setItem('userEmail', userData.email);
-                        sessionStorage.setItem('userUid', user.uid);
-                        window.location.href = 'index.html';
-                    } else {
-                        await auth.signOut();
-                        alert('Akun Anda belum disetujui oleh Admin.');
-                    }
+
+                if (!userDoc.exists) {
+                    await auth.signOut();
+                    showMessage('Data pengguna tidak ditemukan di database. Hubungi Admin.', 'error');
+                    setLoading('btn-login', false);
+                    return;
+                }
+
+                const userData = userDoc.data();
+                if (userData.role === 'admin' || userData.approved) {
+                    sessionStorage.setItem('isLoggedIn', 'true');
+                    sessionStorage.setItem('userRole', userData.role);
+                    sessionStorage.setItem('userName', userData.name);
+                    sessionStorage.setItem('userEmail', userData.email);
+                    sessionStorage.setItem('userUid', user.uid);
+                    window.location.href = 'index.html';
                 } else {
                     await auth.signOut();
-                    alert('Data pengguna tidak ditemukan di database.');
+                    showMessage('Akun Anda belum disetujui oleh Administrator. Silakan tunggu persetujuan.', 'error');
                 }
             } catch (error) {
                 console.error(error);
-                alert('Login gagal! Periksa email dan password Anda, atau akun belum terdaftar di Firebase.');
+                let msg = 'Login gagal. ';
+                if (error.code === 'auth/user-not-found') msg += 'Email tidak terdaftar.';
+                else if (error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') msg += 'Password salah.';
+                else if (error.code === 'auth/invalid-email') msg += 'Format email tidak valid.';
+                else if (error.code === 'auth/too-many-requests') msg += 'Terlalu banyak percobaan. Coba lagi nanti.';
+                else msg += error.message;
+                showMessage(msg, 'error');
             }
+            setLoading('btn-login', false);
+        }
+
+        // ====== REGISTER NEW ACCOUNT ======
+        async function handleRegister(event) {
+            event.preventDefault();
+            hideMessage();
+            const name = document.getElementById('reg-name').value.trim();
+            const email = document.getElementById('reg-email').value.trim();
+            const pw = document.getElementById('reg-password').value;
+            const pw2 = document.getElementById('reg-password2').value;
+
+            if (pw !== pw2) { showMessage('Password dan konfirmasi tidak cocok!', 'error'); return; }
+            if (pw.length < 6) { showMessage('Password minimal 6 karakter.', 'error'); return; }
+
+            setLoading('btn-register', true);
+            try {
+                // Check auto-approve setting
+                let autoApprove = false;
+                try {
+                    const settingsDoc = await db.collection('settings').doc('global').get();
+                    if (settingsDoc.exists) autoApprove = settingsDoc.data().auto_approve === true;
+                } catch (e) { console.warn("Gagal membaca settings", e); }
+
+                // Create Firebase Auth user
+                const result = await auth.createUserWithEmailAndPassword(email, pw);
+                const user = result.user;
+
+                // Update display name
+                await user.updateProfile({ displayName: name });
+
+                // Save user data to Firestore
+                await db.collection('users').doc(user.uid).set({
+                    email: user.email,
+                    name: name,
+                    role: 'user',
+                    approved: autoApprove,
+                    provider: 'email',
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+
+                await auth.signOut();
+
+                if (autoApprove) {
+                    showMessage('Akun berhasil dibuat! Silakan login dengan email dan password Anda.', 'success');
+                } else {
+                    showMessage('Akun berhasil didaftarkan! Menunggu persetujuan Administrator sebelum dapat login.', 'info');
+                }
+
+                // Clear form
+                document.getElementById('register-form').reset();
+                document.getElementById('pw-strength-bar').style.width = '0';
+
+            } catch (error) {
+                console.error(error);
+                let msg = 'Pendaftaran gagal. ';
+                if (error.code === 'auth/email-already-in-use') msg += 'Email ini sudah terdaftar. Silakan login.';
+                else if (error.code === 'auth/weak-password') msg += 'Password terlalu lemah. Gunakan minimal 6 karakter.';
+                else if (error.code === 'auth/invalid-email') msg += 'Format email tidak valid.';
+                else msg += error.message;
+                showMessage(msg, 'error');
+            }
+            setLoading('btn-register', false);
+        }
+
+        // ====== FORGOT PASSWORD ======
+        async function handleForgotPassword(event) {
+            event.preventDefault();
+            hideMessage();
+            const email = document.getElementById('forgot-email').value.trim();
+
+            setLoading('btn-forgot', true);
+            try {
+                await auth.sendPasswordResetEmail(email);
+                showMessage('Link reset password telah dikirim ke <strong>' + email + '</strong>. Silakan cek inbox atau folder spam Anda.', 'success');
+                document.getElementById('forgot-form').reset();
+            } catch (error) {
+                console.error(error);
+                let msg = 'Gagal mengirim reset password. ';
+                if (error.code === 'auth/user-not-found') msg += 'Email ini tidak terdaftar di sistem.';
+                else if (error.code === 'auth/invalid-email') msg += 'Format email tidak valid.';
+                else msg += error.message;
+                showMessage(msg, 'error');
+            }
+            setLoading('btn-forgot', false);
+        }
+
+        // ====== DEMO LOGIN (FOR TESTERS) ======
+        function loginDemo(role) {
+            const demos = {
+                admin: {
+                    role: 'admin',
+                    name: 'Demo Admin',
+                    email: 'admin@demo.visitrak.com',
+                    uid: 'demo-admin-001'
+                },
+                operator: {
+                    role: 'user',
+                    name: 'Demo Operator',
+                    email: 'operator@demo.visitrak.com',
+                    uid: 'demo-operator-001'
+                }
+            };
+            const d = demos[role];
+            sessionStorage.setItem('isLoggedIn', 'true');
+            sessionStorage.setItem('userRole', d.role);
+            sessionStorage.setItem('userName', d.name);
+            sessionStorage.setItem('userEmail', d.email);
+            sessionStorage.setItem('userUid', d.uid);
+            window.location.href = 'index.html';
         }
     </script>
 </body>

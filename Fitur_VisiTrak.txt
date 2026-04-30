@@ -1,0 +1,116 @@
+================================================================================
+          DOKUMENTASI FITUR LENGKAP - VISITRAK INDUSTRIAL MONITORING
+================================================================================
+
+VisiTrak adalah platform dashboard web interaktif berdesain premium yang ditujukan untuk 
+memantau, mengelola, dan menganalisis operasional pabrik dan mesin industri secara real-time. 
+Aplikasi ini memadukan konsep IoT (Internet of Things), AI (Artificial Intelligence), dan 
+Visualisasi Data ke dalam satu antarmuka (User Interface) yang modern dan responsif.
+
+Berikut adalah rincian lengkap seluruh fitur yang ada di dalam VisiTrak:
+
+--------------------------------------------------------------------------------
+1. SISTEM AUTENTIKASI & MANAJEMEN AKSES PENGGUNA (TERINTEGRASI FIREBASE)
+--------------------------------------------------------------------------------
+- Login dengan Google: Menggunakan otentikasi Firebase (Google Auth) yang aman.
+- Sistem Role-Based Access Control (RBAC): Membedakan hak akses pengguna seperti 
+  Administrator Super, Teknisi Mesin, dan Operator Shift.
+- Sistem Persetujuan (Approval System): Akun baru yang masuk tidak bisa langsung 
+  mengakses dashboard sebelum disetujui (Approve) oleh Administrator.
+- Fitur Auto-Approve: Administrator dapat menyalakan/mematikan fitur persetujuan otomatis 
+  di menu pengaturan, sehingga pengguna baru bisa langsung masuk tanpa antre persetujuan.
+- Kick User: Admin memiliki kemampuan untuk mengeluarkan (kick) pengguna secara paksa 
+  dan memutus sesi mereka secara real-time.
+- User Profile: Modal interaktif untuk melihat detail akun, role, email, dan status aktif.
+
+--------------------------------------------------------------------------------
+2. ANTARMUKA PENGGUNA (UI/UX) PREMIUM & MODERN
+--------------------------------------------------------------------------------
+- Dark Industrial Theme (Default): Skema warna navy-slate yang profesional, dilengkapi dengan 
+  efek glassmorphism (transparan & blur) dan aksen warna cyan/biru neon yang futuristik.
+- Light Mode Toggle: Fitur mode terang untuk lingkungan kerja yang terang. Pilihan tema 
+  disimpan di dalam Local Storage browser (persistensi data).
+- Responsive Design: Berjalan mulus di Desktop, Tablet, maupun Smartphone. Sidebar akan 
+  berubah menjadi menu hamburger (overlay) di layar kecil.
+- Dynamic Sidebar: Menu navigasi yang tidak memuat ulang (reload) halaman saat berpindah menu 
+  (Single Page Application feel), mempercepat interaksi pengguna.
+
+--------------------------------------------------------------------------------
+3. DASHBOARD MONITORING & VISUALISASI DATA
+--------------------------------------------------------------------------------
+- Live Diagnostics: Menampilkan metrik utama secara langsung seperti Suhu Rata-rata, 
+  Output Shift Ini, Total Downtime (waktu mati mesin), dan Efisiensi OEE (Overall Equipment Effectiveness).
+- Grafik Interaktif (Chart.js): Visualisasi "Output vs Energi" menggunakan grafik garis (Line Chart) 
+  yang dinamis dengan kurva halus, memungkinkan analisis korelasi antara produksi dan konsumsi listrik.
+- Panel Kontrol Jarak Jauh (Controllable Panel): Tombol START, STOP, dan AUTO untuk 
+  menyalakan/mematikan mesin dari jarak jauh, lengkap dengan tombol "EMERGENCY STOP ALL" merah berkedip.
+- Rekomendasi AI Optimizer: Kotak informasi yang memberikan saran otomatis, misalnya peringatan 
+  untuk mendinginkan mesin tertentu karena anomali getaran/suhu.
+
+--------------------------------------------------------------------------------
+4. FORUM KOMUNIKASI GLOBAL (REAL-TIME CHAT)
+--------------------------------------------------------------------------------
+- Live Synchronization: Chat langsung sinkron antar semua perangkat menggunakan Firebase Cloud Firestore.
+- WhatsApp-Style Bubbles: Tampilan chat modern dengan balon percakapan yang membedakan 
+  pesan "Milik Sendiri" dan "Orang Lain".
+- Identifikasi Dinamis: Warna nama pengirim di-generate secara otomatis dan unik berdasarkan 
+  hash dari nama mereka agar mudah dibedakan. Menampilkan juga email pengirim.
+- Smart Auto-Scroll: Secara otomatis melakukan scroll ke bawah saat membuka obrolan, namun 
+  akan mengunci (mempertahankan) posisi bacaan jika pengguna sedang melakukan scroll ke atas 
+  (membaca history) meskipun ada pesan baru yang masuk.
+- Hapus Pesan: Admin dapat menghapus chat siapapun, dan pengguna dapat menghapus chatnya sendiri.
+- XSS Protection: Input disanitasi secara otomatis untuk mencegah serangan injeksi script berbahaya.
+
+--------------------------------------------------------------------------------
+5. AI CCTV KARYAWAN (INTEGRASI KAMERA LAPTOP/WEBCAM)
+--------------------------------------------------------------------------------
+- Akses Perangkat Keras: Memanfaatkan API browser untuk mengakses webcam secara langsung.
+- Toggle Switch: Satu tombol pintar untuk Menyalakan atau Mematikan kamera.
+- Non-Mirrored View: Tampilan kamera disesuaikan agar tidak terbalik (seperti cermin), 
+  memudahkan pemantauan pergerakan asli di lapangan.
+- Simulasi Deteksi AI Karyawan: Menampilkan "Bounding Boxes" (kotak penanda AI) yang mensimulasikan 
+  pelacakan objek.
+- Live Logging Activity: Menampilkan jumlah karyawan yang Bekerja, Istirahat, atau Bermain HP, 
+  beserta log waktu dan nama secara real-time.
+
+--------------------------------------------------------------------------------
+6. 3D INDUSTRIAL PARTS VIEWER (THREE.JS INTEGRATION)
+--------------------------------------------------------------------------------
+- Katalog File Interaktif: File browser bergaya direktori (Folder) di sidebar kiri untuk 
+  memilih part/komponen mesin berdasarkan kategori (Mesin CNC, Conveyor, Cooling System).
+- Render 3D Real-time: Menggunakan library Three.js untuk memuat dan merender model 3D 
+  berformat .STL secara akurat dan responsif.
+- Manipulasi Kamera: Mendukung Orbit Controls (Putar, Zoom/Scroll, Geser/Pan).
+- Action Panel:
+  - Wireframe Mode: Tombol untuk melihat kerangka struktur poligonal dari model 3D.
+  - Auto Rotate: Tombol untuk memutar model 3D secara otomatis 360 derajat.
+  - Reset View: Mengembalikan kamera ke posisi awal (default).
+- Kalkulator Metrik Part Otomatis: Sistem secara otomatis menganalisis file STL dan 
+  menampilkan data fisik di panel informasi, termasuk:
+  - Jumlah Triangles (Poligon).
+  - Dimensi Panjang x Lebar x Tinggi (mm).
+  - Estimasi Volume (cm³) menggunakan perhitungan tetrahedron.
+  - Estimasi Luas Permukaan / Surface Area (cm²).
+
+--------------------------------------------------------------------------------
+7. SISTEM PEMELIHARAAN (MAINTENANCE KANBAN BOARD)
+--------------------------------------------------------------------------------
+- Papan tugas bergaya Kanban (Trello-style) dengan 3 kolom utama:
+  1. To Do (Tugas yang harus dikerjakan)
+  2. In Progress (Sedang diperbaiki)
+  3. Done (Selesai)
+- Berfungsi untuk memudahkan pelacakan jadwal perbaikan, penggantian oli, kalibrasi sensor, 
+  dan penugasan teknisi.
+
+--------------------------------------------------------------------------------
+8. AZURE AI ASSISTANT (WIDGET CHATBOT)
+--------------------------------------------------------------------------------
+- Widget Chat Melayang (Floating Chatbot): Tersedia di pojok kanan bawah seluruh halaman.
+- Interaksi Pintar: Tempat bagi pengguna untuk bertanya seputar SOP, status anomali mesin, 
+  atau panduan operasional. 
+- (Catatan: Frontend UI sudah tersedia lengkap dengan animasi lipat/buka, siap untuk 
+  diintegrasikan dengan backend API OpenAI / Azure Bot Service).
+
+================================================================================
+DOKUMEN INI DI-GENERATE OLEH SISTEM UNTUK VISITRAK INDUSTRIAL MONITORING
+================================================================================
