@@ -174,9 +174,20 @@ function switchSidebarView(evt, viewId) {
     else if (viewId === 'view-laporan') pageTitle.innerText = "Laporan & Analitik";
     else if (viewId === 'view-pemeliharaan') pageTitle.innerText = "Manajemen Pemeliharaan";
     else if (viewId === 'view-alarm') pageTitle.innerText = "Log Alarm & Notifikasi";
-    else if (viewId === 'view-chat') pageTitle.innerText = "Forum Komunikasi Global";
+    else if (viewId === 'view-chat') {
+        pageTitle.innerText = "Forum Komunikasi Global";
+        // Langsung scroll ke paling bawah chat (dasar)
+        setTimeout(() => {
+            const chatContainer = document.getElementById('global-chat-messages');
+            if (chatContainer) chatContainer.scrollTop = chatContainer.scrollHeight;
+        }, 50);
+    }
     else if (viewId === 'view-pengaturan') pageTitle.innerText = "Pengaturan Sistem";
-    else if (viewId === 'view-qc') pageTitle.innerText = "Visual Quality Control (AI)";
+    else if (viewId === 'view-qc') pageTitle.innerText = "AI CCTV Karyawan";
+    else if (viewId === 'view-3d') {
+        pageTitle.innerText = "3D Industrial Parts Viewer";
+        setTimeout(() => initSTLViewer(), 100);
+    }
     
     // Tutup otomatis sidebar di mobile setelah mengklik menu
     if (window.innerWidth <= 768) {
@@ -658,13 +669,23 @@ function initGlobalChat() {
     globalChatUnsubscribe = db.collection('global_chats')
         .orderBy('timestamp', 'asc')
         .onSnapshot(snapshot => {
+            // Hitung jarak dari bawah sebelum update
+            const isNearBottom = container.scrollHeight - container.scrollTop - container.clientHeight <= 100;
+            const distanceFromBottom = container.scrollHeight - container.scrollTop;
+
             container.innerHTML = '';
             snapshot.forEach(doc => {
                 const data = doc.data();
                 renderGlobalMessage(doc.id, data, container);
             });
-            // Auto-scroll ke bawah saat ada pesan baru
-            container.scrollTop = container.scrollHeight;
+            
+            // Auto-scroll ke bawah HANYA jika sebelumnya sudah di bawah (atau baru load pertama)
+            // Jika user sedang scroll ke atas membaca chat lama, pertahankan posisi scrollnya
+            if (isNearBottom || container.scrollTop === 0) {
+                container.scrollTop = container.scrollHeight;
+            } else {
+                container.scrollTop = container.scrollHeight - distanceFromBottom;
+            }
         });
 }
 
@@ -950,3 +971,326 @@ window.toggleDarkMode = function() {
         }
     }
 })();
+
+// ===================================================================
+// --- 3D STL PARTS VIEWER (Three.js) ---
+// ===================================================================
+
+// Katalog file STL — struktur: mesin > kategori part > file
+const stlCatalog = {
+    'Mesin CNC Alpha': {
+        icon: 'fa-industry',
+        parts: {
+            'Spindle': [
+                { file: 'models/mesin-cnc-alpha/spindle/spindle_housing.stl', name: 'Spindle Housing', material: 'Stainless Steel 304', weight: '2.4 kg' }
+            ],
+            'Bracket': [
+                { file: 'models/mesin-cnc-alpha/bracket/mounting_bracket.stl', name: 'Mounting Bracket', material: 'Aluminium 6061', weight: '0.8 kg' }
+            ],
+            'Gear': [
+                { file: 'models/mesin-cnc-alpha/gear/drive_gear.stl', name: 'Drive Gear Z48', material: 'Carbon Steel', weight: '1.2 kg' }
+            ]
+        }
+    },
+    'Conveyor Line A': {
+        icon: 'fa-conveyor-belt',
+        parts: {
+            'Roller': [
+                { file: 'models/conveyor-line-a/roller/roller_shaft.stl', name: 'Roller Shaft', material: 'Hardened Steel', weight: '3.1 kg' }
+            ],
+            'Frame': [
+                { file: 'models/conveyor-line-a/frame/frame_profile.stl', name: 'T-Slot Frame Profile', material: 'Aluminium Extrusion', weight: '1.6 kg' }
+            ],
+            'Fastener': [
+                { file: 'models/conveyor-line-a/fastener/hex_bolt_m8.stl', name: 'Hex Bolt M8x30', material: 'Zinc Plated Steel', weight: '0.02 kg' }
+            ]
+        }
+    },
+    'Cooling System': {
+        icon: 'fa-snowflake',
+        parts: {
+            'Impeller': [
+                { file: 'models/cooling-system/impeller/fan_blade.stl', name: 'Fan Blade Impeller', material: 'Nylon PA12', weight: '0.15 kg' }
+            ],
+            'Housing': [
+                { file: 'models/cooling-system/housing/pump_housing.stl', name: 'Pump Housing', material: 'Cast Iron', weight: '4.5 kg' }
+            ],
+            'Pipe': [
+                { file: 'models/cooling-system/pipe/pipe_section.stl', name: 'Pipe Section DN50', material: 'PVC Schedule 40', weight: '0.6 kg' }
+            ]
+        }
+    }
+};
+
+let stlScene, stlCamera, stlRenderer, stlControls, stlCurrentMesh, stlAnimId;
+let stlViewerInitialized = false;
+let stlWireframeOn = false;
+
+function initSTLViewer() {
+    buildSTLFileBrowser();
+    
+    if (stlViewerInitialized) {
+        onSTLResize();
+        return;
+    }
+    
+    const container = document.getElementById('stl-viewer-container');
+    if (!container || container.offsetWidth === 0) return;
+    
+    // Scene
+    stlScene = new THREE.Scene();
+    
+    // Camera
+    stlCamera = new THREE.PerspectiveCamera(45, container.offsetWidth / container.offsetHeight, 0.1, 2000);
+    stlCamera.position.set(60, 60, 60);
+    
+    // Renderer
+    stlRenderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    stlRenderer.setSize(container.offsetWidth, container.offsetHeight);
+    stlRenderer.setPixelRatio(window.devicePixelRatio);
+    stlRenderer.setClearColor(0x0a0f1e);
+    container.innerHTML = '';
+    container.appendChild(stlRenderer.domElement);
+    
+    // Lights
+    const ambientLight = new THREE.AmbientLight(0x404060, 0.6);
+    stlScene.add(ambientLight);
+    
+    const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+    directionalLight.position.set(50, 80, 50);
+    stlScene.add(directionalLight);
+    
+    const backLight = new THREE.DirectionalLight(0x4488ff, 0.3);
+    backLight.position.set(-50, -30, -50);
+    stlScene.add(backLight);
+    
+    // Grid
+    const grid = new THREE.GridHelper(200, 20, 0x1e3a5f, 0x0d1b2a);
+    stlScene.add(grid);
+    
+    // Orbit Controls
+    stlControls = new THREE.OrbitControls(stlCamera, stlRenderer.domElement);
+    stlControls.enableDamping = true;
+    stlControls.dampingFactor = 0.08;
+    stlControls.autoRotate = false;
+    stlControls.autoRotateSpeed = 2;
+    
+    // Animate
+    function animate() {
+        stlAnimId = requestAnimationFrame(animate);
+        stlControls.update();
+        stlRenderer.render(stlScene, stlCamera);
+    }
+    animate();
+    
+    // Resize handler
+    window.addEventListener('resize', onSTLResize);
+    
+    stlViewerInitialized = true;
+}
+
+function onSTLResize() {
+    const container = document.getElementById('stl-viewer-container');
+    if (!container || !stlRenderer) return;
+    const w = container.offsetWidth;
+    const h = container.offsetHeight;
+    if (w === 0 || h === 0) return;
+    stlCamera.aspect = w / h;
+    stlCamera.updateProjectionMatrix();
+    stlRenderer.setSize(w, h);
+}
+
+function buildSTLFileBrowser() {
+    const browser = document.getElementById('stl-file-browser');
+    if (!browser) return;
+    browser.innerHTML = '';
+    
+    for (const [machineName, machineData] of Object.entries(stlCatalog)) {
+        const folderGroup = document.createElement('div');
+        folderGroup.className = 'stl-folder-group';
+        
+        const folderHeader = document.createElement('div');
+        folderHeader.className = 'stl-folder-header';
+        folderHeader.innerHTML = `<i class="fas fa-chevron-right"></i><i class="fas fa-folder"></i> ${machineName}`;
+        
+        const folderChildren = document.createElement('div');
+        folderChildren.className = 'stl-folder-children';
+        
+        folderHeader.addEventListener('click', () => {
+            folderHeader.classList.toggle('open');
+            folderChildren.classList.toggle('open');
+            const folderIcon = folderHeader.querySelectorAll('i')[1];
+            folderIcon.className = folderChildren.classList.contains('open') ? 'fas fa-folder-open' : 'fas fa-folder';
+        });
+        
+        for (const [partCategory, files] of Object.entries(machineData.parts)) {
+            const subGroup = document.createElement('div');
+            subGroup.className = 'stl-subfolder-group';
+            
+            const subHeader = document.createElement('div');
+            subHeader.className = 'stl-subfolder-header';
+            subHeader.innerHTML = `<i class="fas fa-folder"></i> ${partCategory}`;
+            
+            const subChildren = document.createElement('div');
+            subChildren.className = 'stl-folder-children';
+            
+            subHeader.addEventListener('click', () => {
+                subChildren.classList.toggle('open');
+            });
+            
+            files.forEach(fileData => {
+                const fileItem = document.createElement('div');
+                fileItem.className = 'stl-file-item';
+                fileItem.innerHTML = `<i class="fas fa-cube"></i> ${fileData.name}`;
+                fileItem.addEventListener('click', () => {
+                    document.querySelectorAll('.stl-file-item').forEach(el => el.classList.remove('active'));
+                    fileItem.classList.add('active');
+                    loadSTLFile(fileData, machineName, partCategory);
+                });
+                subChildren.appendChild(fileItem);
+            });
+            
+            subGroup.appendChild(subHeader);
+            subGroup.appendChild(subChildren);
+            folderChildren.appendChild(subGroup);
+        }
+        
+        folderGroup.appendChild(folderHeader);
+        folderGroup.appendChild(folderChildren);
+        browser.appendChild(folderGroup);
+    }
+}
+
+function loadSTLFile(fileData, machineName, partCategory) {
+    if (!stlScene) return;
+    
+    // Remove existing mesh
+    if (stlCurrentMesh) {
+        stlScene.remove(stlCurrentMesh);
+        if (stlCurrentMesh.geometry) stlCurrentMesh.geometry.dispose();
+        if (stlCurrentMesh.material) stlCurrentMesh.material.dispose();
+    }
+    
+    // Hide placeholder
+    const placeholder = document.getElementById('stl-placeholder');
+    if (placeholder) placeholder.style.display = 'none';
+    
+    const loader = new THREE.STLLoader();
+    loader.load(fileData.file, function(geometry) {
+        geometry.computeBoundingBox();
+        geometry.computeVertexNormals();
+        
+        const material = new THREE.MeshPhongMaterial({
+            color: 0x06b6d4,
+            specular: 0x222222,
+            shininess: 60,
+            flatShading: false,
+            wireframe: stlWireframeOn
+        });
+        
+        stlCurrentMesh = new THREE.Mesh(geometry, material);
+        
+        // Center the model
+        const box = geometry.boundingBox;
+        const center = new THREE.Vector3();
+        box.getCenter(center);
+        stlCurrentMesh.position.sub(center);
+        
+        // Scale to fit viewport nicely
+        const size = new THREE.Vector3();
+        box.getSize(size);
+        const maxDim = Math.max(size.x, size.y, size.z);
+        const scale = 40 / maxDim;
+        stlCurrentMesh.scale.set(scale, scale, scale);
+        
+        stlScene.add(stlCurrentMesh);
+        
+        // Reset camera to fit model
+        stlCamera.position.set(60, 50, 60);
+        stlControls.target.set(0, 0, 0);
+        stlControls.update();
+        
+        // Update info panel
+        updateSTLInfo(geometry, fileData, machineName, partCategory);
+        
+    }, undefined, function(error) {
+        console.error('Error loading STL:', error);
+        alert('Gagal memuat file STL: ' + fileData.file);
+    });
+}
+
+function updateSTLInfo(geometry, fileData, machineName, partCategory) {
+    const infoPanel = document.getElementById('stl-info-panel');
+    if (infoPanel) infoPanel.style.display = 'block';
+    
+    // File name
+    document.getElementById('stl-info-name').textContent = fileData.name;
+    document.getElementById('stl-info-machine').textContent = machineName;
+    document.getElementById('stl-info-category').textContent = partCategory;
+    
+    // Triangle count
+    const triCount = geometry.attributes.position.count / 3;
+    document.getElementById('stl-info-triangles').textContent = triCount.toLocaleString();
+    
+    // Bounding box dimensions
+    const box = geometry.boundingBox;
+    const size = new THREE.Vector3();
+    box.getSize(size);
+    document.getElementById('stl-info-dimensions').textContent = 
+        `${size.x.toFixed(1)} × ${size.y.toFixed(1)} × ${size.z.toFixed(1)}`;
+    
+    // File size (estimate from buffer)
+    const fileSize = 84 + (triCount * 50);
+    if (fileSize > 1024 * 1024) {
+        document.getElementById('stl-info-size').textContent = (fileSize / (1024*1024)).toFixed(2) + ' MB';
+    } else {
+        document.getElementById('stl-info-size').textContent = (fileSize / 1024).toFixed(1) + ' KB';
+    }
+    
+    // Volume calculation (signed tetrahedron volume method)
+    const positions = geometry.attributes.position.array;
+    let volume = 0;
+    let surfaceArea = 0;
+    
+    for (let i = 0; i < positions.length; i += 9) {
+        const v1x = positions[i], v1y = positions[i+1], v1z = positions[i+2];
+        const v2x = positions[i+3], v2y = positions[i+4], v2z = positions[i+5];
+        const v3x = positions[i+6], v3y = positions[i+7], v3z = positions[i+8];
+        
+        // Signed volume of tetrahedron with origin
+        volume += (v1x * (v2y * v3z - v3y * v2z) - v2x * (v1y * v3z - v3y * v1z) + v3x * (v1y * v2z - v2y * v1z));
+        
+        // Triangle area using cross product
+        const ax = v2x - v1x, ay = v2y - v1y, az = v2z - v1z;
+        const bx = v3x - v1x, by = v3y - v1y, bz = v3z - v1z;
+        const cx = ay * bz - az * by;
+        const cy = az * bx - ax * bz;
+        const cz = ax * by - ay * bx;
+        surfaceArea += Math.sqrt(cx*cx + cy*cy + cz*cz) * 0.5;
+    }
+    
+    volume = Math.abs(volume / 6);
+    // Convert mm³ to cm³
+    document.getElementById('stl-info-volume').textContent = (volume / 1000).toFixed(2);
+    // Convert mm² to cm²
+    document.getElementById('stl-info-surface').textContent = (surfaceArea / 100).toFixed(2);
+}
+
+window.resetSTLCamera = function() {
+    if (!stlCamera || !stlControls) return;
+    stlCamera.position.set(60, 50, 60);
+    stlControls.target.set(0, 0, 0);
+    stlControls.update();
+};
+
+window.toggleSTLWireframe = function() {
+    stlWireframeOn = !stlWireframeOn;
+    if (stlCurrentMesh && stlCurrentMesh.material) {
+        stlCurrentMesh.material.wireframe = stlWireframeOn;
+    }
+};
+
+window.toggleSTLAutoRotate = function() {
+    if (!stlControls) return;
+    stlControls.autoRotate = !stlControls.autoRotate;
+};

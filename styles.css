@@ -1033,3 +1033,154 @@ tr:hover td {
     border: none; border-radius: 8px; cursor: pointer; font-weight: bold; transition: 0.3s;
 }
 .btn-primary-full:hover { box-shadow: 0 0 20px var(--primary-glow); }
+
+/* ===== 3D STL Viewer ===== */
+.stl-folder-group {
+    margin-bottom: 6px;
+}
+
+.stl-folder-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 10px;
+    cursor: pointer;
+    border-radius: 6px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--text-main);
+    transition: background 0.2s;
+    user-select: none;
+}
+
+.stl-folder-header:hover {
+    background: rgba(59, 130, 246, 0.1);
+}
+
+.stl-folder-header i.fa-folder,
+.stl-folder-header i.fa-folder-open {
+    color: var(--warning);
+}
+
+.stl-folder-header .fa-chevron-right {
+    font-size: 0.65rem;
+    transition: transform 0.2s;
+    color: var(--text-light);
+}
+
+.stl-folder-header.open .fa-chevron-right {
+    transform: rotate(90deg);
+}
+
+.stl-subfolder-group {
+    margin-left: 15px;
+    margin-bottom: 2px;
+}
+
+.stl-subfolder-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 10px;
+    cursor: pointer;
+    border-radius: 5px;
+    font-size: 0.82rem;
+    font-weight: 500;
+    color: var(--text-light);
+    transition: background 0.2s;
+    user-select: none;
+}
+
+.stl-subfolder-header:hover {
+    background: rgba(59, 130, 246, 0.08);
+    color: var(--text-main);
+}
+
+.stl-subfolder-header i.fa-folder {
+    color: var(--accent);
+    font-size: 0.8rem;
+}
+
+.stl-file-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 7px 10px 7px 25px;
+    margin-left: 15px;
+    cursor: pointer;
+    border-radius: 5px;
+    font-size: 0.8rem;
+    color: var(--text-light);
+    transition: all 0.2s;
+    user-select: none;
+}
+
+.stl-file-item:hover {
+    background: rgba(6, 182, 212, 0.1);
+    color: var(--accent);
+}
+
+.stl-file-item.active {
+    background: rgba(6, 182, 212, 0.15);
+    color: var(--accent);
+    font-weight: 600;
+    border-left: 2px solid var(--accent);
+}
+
+.stl-file-item i {
+    color: var(--accent);
+    font-size: 0.75rem;
+}
+
+.stl-folder-children {
+    display: none;
+    padding-left: 5px;
+}
+
+.stl-folder-children.open {
+    display: block;
+}
+
+.stl-info-item {
+    padding: 10px 14px;
+    background: rgba(15, 23, 42, 0.4);
+    border-radius: 8px;
+    border: 1px solid var(--card-border);
+}
+
+.stl-info-label {
+    display: block;
+    font-size: 0.72rem;
+    color: var(--text-light);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 4px;
+}
+
+.stl-info-value {
+    display: block;
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--text-main);
+}
+
+/* Light mode for 3D viewer */
+body.light-mode .stl-info-item {
+    background: #f8fafc;
+}
+
+body.light-mode #stl-viewer-container {
+    background: #e8ecf1 !important;
+}
+
+body.light-mode .stl-file-item.active {
+    background: rgba(6, 182, 212, 0.1);
+}
+
+/* Responsive 3D viewer */
+@media (max-width: 768px) {
+    #view-3d > div:nth-child(2) {
+        grid-template-columns: 1fr !important;
+        height: auto !important;
+    }
+}
