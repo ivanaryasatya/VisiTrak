@@ -11,6 +11,7 @@
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+    <script src="firebase-config.js"></script>
 </head>
 <body class="login-body">
     <div class="login-wrapper">
@@ -52,24 +53,6 @@
 
     <!-- Logika Autentikasi Sederhana -->
     <script>
-        // Konfigurasi Firebase (GANTI DENGAN MILIK ANDA)
-        const firebaseConfig = {
-            apiKey: "AIzaSyBR4o2yQpnEWglZWaIrF0RMsemwKMe2wtM",
-            authDomain: "visitrak-83353.firebaseapp.com",
-            databaseURL: "https://visitrak-83353-default-rtdb.asia-southeast1.firebasedatabase.app",
-            projectId: "visitrak-83353",
-            storageBucket: "visitrak-83353.firebasestorage.app",
-            messagingSenderId: "610189188757",
-            appId: "1:610189188757:web:665d5f60c04f3bf519c59c",
-            measurementId: "G-NM90818W43"
-        };
-
-        if (!firebase.apps.length) {
-            firebase.initializeApp(firebaseConfig);
-        }
-        const auth = firebase.auth();
-        const db = firebase.firestore();
-
         // Cek jika sudah login sebelumnya
         if (sessionStorage.getItem('isLoggedIn') === 'true') {
             window.location.href = 'index.html';

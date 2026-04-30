@@ -1,21 +1,3 @@
-// --- Inisialisasi Firebase ---
-const firebaseConfig = {
-    apiKey: "AIzaSyBR4o2yQpnEWglZWaIrF0RMsemwKMe2wtM",
-    authDomain: "visitrak-83353.firebaseapp.com",
-    databaseURL: "https://visitrak-83353-default-rtdb.asia-southeast1.firebasedatabase.app",
-    projectId: "visitrak-83353",
-    storageBucket: "visitrak-83353.firebasestorage.app",
-    messagingSenderId: "610189188757",
-    appId: "1:610189188757:web:665d5f60c04f3bf519c59c",
-    measurementId: "G-NM90818W43"
-  };
-
-if (typeof firebase !== 'undefined' && !firebase.apps.length) {
-    firebase.initializeApp(firebaseConfig);
-}
-const auth = typeof firebase !== 'undefined' ? firebase.auth() : null;
-const db = typeof firebase !== 'undefined' ? firebase.firestore() : null;
-
 // --- Keamanan Akses (Route Guard) Sederhana ---
 if (sessionStorage.getItem('isLoggedIn') !== 'true') {
     window.location.href = 'login.html'; // Tendang kembali ke halaman login jika belum masuk
@@ -105,6 +87,10 @@ document.addEventListener("DOMContentLoaded", () => {
                 loadAdminData();
                 // Mulai mendengarkan permintaan login baru secara real-time
                 listenForPendingUsers();
+                
+                // Tampilkan tombol Hapus Semua Chat khusus untuk Admin
+                const btnClearChat = document.getElementById('btn-clear-chat');
+                if (btnClearChat) btnClearChat.style.display = 'block';
             }
         }
         
@@ -697,10 +683,7 @@ function renderGlobalMessage(msgId, data, container) {
         timeStr = date.getHours().toString().padStart(2, '0') + ':' + date.getMinutes().toString().padStart(2, '0');
     }
 
-    // Meta Info (Nama & Waktu)
-    const metaHtml = `<div class="global-chat-meta">${isOwn ? 'Anda' : data.senderName} • ${timeStr}</div>`;
-
-    // Tombol Aksi (Hanya Hapus)
+    // Tombol Aksi (Hapus Per Pesan)
     let actionBtns = `<div style="position: relative; display: flex; align-items: center;">`;
     if (isAdmin || isOwn) {
         actionBtns += `<button class="chat-action-btn" onclick="deleteGlobalMessage('${msgId}')" title="Hapus Pesan"><i class="fas fa-trash"></i></button>`;
@@ -708,9 +691,16 @@ function renderGlobalMessage(msgId, data, container) {
     actionBtns += `</div>`;
 
     wrapper.innerHTML = `
-        ${metaHtml}
-        <div style="display: flex; align-items: flex-start; gap: 5px; flex-direction: ${isOwn ? 'row-reverse' : 'row'};">
-            <div class="global-chat-bubble ${isOwn ? 'own' : 'other'}">${data.text}</div>
+        <div style="display: flex; align-items: flex-start; gap: 5px; flex-direction: ${isOwn ? 'row-reverse' : 'row'}; width: 100%;">
+            <div class="global-chat-bubble ${isOwn ? 'own' : 'other'}" style="display: flex; flex-direction: column; min-width: 140px;">
+                <div class="global-chat-meta" style="text-align: left; margin-bottom: 4px;">
+                    <strong style="color: ${isOwn ? '#10b981' : '#2563eb'}; font-size: 0.8rem;">${isOwn ? 'Anda' : data.senderName}</strong>
+                </div>
+                <div style="word-wrap: break-word; margin-bottom: 2px;">${data.text}</div>
+                <div class="global-chat-meta" style="text-align: right; margin-top: auto; font-size: 0.65rem; opacity: 0.7; margin-bottom: 0;">
+                    ${timeStr}
+                </div>
+            </div>
             ${actionBtns}
         </div>
     `;
@@ -746,6 +736,23 @@ window.deleteGlobalMessage = async function(msgId) {
             await db.collection('global_chats').doc(msgId).delete();
         } catch(e) {
             alert("Gagal menghapus pesan. Pastikan Anda memiliki hak akses (Admin/Pemilik).");
+        }
+    }
+};
+
+window.clearAllGlobalChats = async function() {
+    if (!db) return;
+    if (confirm("PERINGATAN BAHAYA!\n\nYakin ingin menghapus SEMUA riwayat chat global? Tindakan ini tidak dapat dibatalkan.")) {
+        try {
+            const snapshot = await db.collection('global_chats').get();
+            const batch = db.batch();
+            snapshot.docs.forEach((doc) => {
+                batch.delete(doc.ref);
+            });
+            await batch.commit(); // Eksekusi penghapusan massal
+            alert("Semua riwayat chat berhasil dibersihkan.");
+        } catch(e) {
+            alert("Gagal menghapus chat. Pastikan Anda memiliki hak akses (Admin).");
         }
     }
 };

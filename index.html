@@ -16,6 +16,7 @@
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+    <script src="firebase-config.js"></script>
 </head>
 <body>
     <div class="dashboard-container">
@@ -605,9 +606,12 @@
 
             <!-- Sidebar Content: Chat Global -->
             <div id="view-chat" class="sidebar-view">
-                <div class="view-header" style="margin-bottom: 20px;">
-                    <h2><i class="fas fa-comments"></i> Forum Komunikasi Global</h2>
-                    <p style="color: var(--text-light); margin-top: 5px;">Diskusikan status operasional secara real-time dengan seluruh tim.</p>
+                <div class="view-header" style="margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+                    <div>
+                        <h2><i class="fas fa-comments"></i> Forum Komunikasi Global</h2>
+                        <p style="color: var(--text-light); margin-top: 5px;">Diskusikan status operasional secara real-time dengan seluruh tim.</p>
+                    </div>
+                    <button id="btn-clear-chat" class="btn btn-emergency" style="width: auto; padding: 8px 15px; margin: 0; display: none;" onclick="clearAllGlobalChats()"><i class="fas fa-trash-alt"></i> Bersihkan Semua Chat</button>
                 </div>
                 <div class="card chat-container-bg" style="display: flex; flex-direction: column; height: 65vh; padding: 0; overflow: hidden;">
                     <div id="global-chat-messages" style="flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 15px;">
